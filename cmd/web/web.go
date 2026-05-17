@@ -16,18 +16,13 @@ import (
 	"github.com/os-webui/os-webui/config"
 )
 
-// Run bootstraps the Gin web engine and manages the server lifecycle
+// Run bootstraps the Gin web engine with standard library native h2c support
 func Run(cfg *config.Config) error {
-	// Set Gin runtime mode to Release to strip debug noise and optimize allocations
 	gin.SetMode(gin.ReleaseMode)
 
-	// Initialize raw Gin engine
 	r := gin.New()
-
-	// Inject recovery middleware to gracefully catch unhandled panics within routines
 	r.Use(gin.Recovery())
 
-	// Bind core application routing metrics
 	setupRoutes(r)
 
 	// 1. Establish the native core network listener (supports tcp, tcp4, unix)
@@ -50,29 +45,33 @@ func Run(cfg *config.Config) error {
 		slog.Info("TLS security layer activated successfully via ALPN transport")
 	}
 
-	// 3. Mount handler into standard net/http Server architecture
+	// 3. 🌟 Initialize native protocol orchestration via Go standard library
+	// This declares explicit support for both standard HTTP/1 and unencrypted HTTP/2 (Prior Knowledge h2c)
+	protocols := new(http.Protocols)
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true) // Native h2c engine engaged!
+
+	// 4. Mount the handler and protocols straight into standard net/http Server architecture
 	srv := &http.Server{
-		Handler: r,
+		Handler:   r,
+		Protocols: protocols, // 🌟 Zero external dependencies, pure native compliance
 	}
 
-	// 4. Implement Graceful Shutdown mechanics via OS signals
+	// 5. Implement Graceful Shutdown mechanics via OS signals
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Spawn the network server worker thread asynchronously
 	go func() {
-		slog.Info("os-webui engine interface online", "network", cfg.Web.Network, "address", cfg.Web.Addr)
+		slog.Info("os-webui engine interface online", "network", cfg.Web.Network, "address", cfg.Web.Addr, "native_h2c", true)
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("critical crash caught inside native server listener", "error", err)
 			os.Exit(1)
 		}
 	}()
 
-	// Block main thread context until OS signal is intercepted
 	<-shutdownCtx.Done()
 	slog.Warn("shutdown signal intercepted, initializing graceful timeout sequences...")
 
-	// Enforce a strict 5-second maximum drain window for pending streaming sockets
 	drainCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -81,7 +80,6 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
-	// If using Unix Domain Sockets, sweep the dead .sock file off the host filesystem cleanly
 	if cfg.Web.Network == "unix" {
 		if err := os.Remove(cfg.Web.Addr); err != nil && !os.IsNotExist(err) {
 			slog.Warn("unable to purge dangling unix socket descriptor", "path", cfg.Web.Addr, "error", err)
@@ -94,16 +92,15 @@ func Run(cfg *config.Config) error {
 	return nil
 }
 
-// setupRoutes handles operational HTTP routing parameters
 func setupRoutes(r *gin.Engine) {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "healthy",
 			"runtime": "go-native",
+			"proto":   c.Request.Proto, // Prints "HTTP/2.0" instantly under native h2c client connection
 		})
 	})
 
-	// Placeholder route: Where your gorilla/websocket connection handler will attach to Yaegi stream execution contexts
 	r.GET("/ws", func(c *gin.Context) {
 		c.String(http.StatusOK, "websocket tunnel context endpoint ready")
 	})
