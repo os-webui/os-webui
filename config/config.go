@@ -4,14 +4,14 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"os"
 
-	"github.com/dop251/goja"
+	"github.com/google/go-jsonnet"
 	"github.com/os-webui/os-webui/internal/utils"
 )
 
 // Config represents the core configuration architecture
 type Config struct {
+	Dev     bool         `json:"dev"`
 	Web     WebConfig    `json:"web"`
 	Plugins PluginConfig `json:"plugins"`
 }
@@ -45,55 +45,14 @@ func LoadConfig(path string, cfg *Config) error {
 	if cfg == nil {
 		return fmt.Errorf("configuration destination pointer cannot be nil")
 	}
-
-	script, err := os.ReadFile(path)
+	vm := jsonnet.MakeVM()
+	jsonStr, err := vm.EvaluateFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
+		return fmt.Errorf("jsonnet evaluation failed: %w", err)
 	}
-
-	// Initialize Goja runtime engine
-	vm := goja.New()
-	exports := vm.NewObject()
-	if err = vm.Set("exports", exports); err != nil {
-		return fmt.Errorf("failed to initialize JS export bridge: %w", err)
-	}
-
-	// Performance Optimization: Zero-allocation conversion for safe read-only execution input
-	_, err = vm.RunString(utils.BytesToString(script))
-	if err != nil {
-		return fmt.Errorf("config js execution failed: %w", err)
-	}
-
-	jsConfig := exports.Get("config")
-	if jsConfig == nil || goja.IsUndefined(jsConfig) {
-		return fmt.Errorf("missing 'exports.config' object in config.js")
-	}
-
-	// Safely retrieve the global JSON object to avoid structural panics
-	jsGlobalJSON := vm.Get("JSON")
-	if jsGlobalJSON == nil {
-		return fmt.Errorf("failed to find global JSON engine")
-	}
-
-	jsStringifyObject := jsGlobalJSON.(*goja.Object).Get("stringify")
-	jsonStringify, ok := goja.AssertFunction(jsStringifyObject)
-	if !ok {
-		return fmt.Errorf("failed to locate global JSON.stringify function")
-	}
-
-	// Transform the native JavaScript object into a flat serialized JSON string
-	jsonResult, err := jsonStringify(goja.Undefined(), jsConfig)
-	if err != nil {
-		return fmt.Errorf("failed to stringify config object: %w", err)
-	}
-
-	// Performance Optimization: jsonResult.String() outputs an isolated fresh string.
-	// Passing it via zero-copy StringToBytes to json.Unmarshal is 100% safe since it's read-only here.
-	// This smoothly layers incoming values right over your externally configured baseline defaults.
-	if err = json.Unmarshal(utils.StringToBytes(jsonResult.String()), cfg); err != nil {
+	if err = json.Unmarshal(utils.StringToBytes(jsonStr), cfg); err != nil {
 		return fmt.Errorf("failed to unmarshal JSON payload into config struct: %w", err)
 	}
-
 	return nil
 }
 

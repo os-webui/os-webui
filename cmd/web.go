@@ -25,6 +25,7 @@ func init() {
 	var (
 		filename      string
 		network, addr string
+		dev           bool
 	)
 
 	cmd := &cobra.Command{
@@ -49,6 +50,9 @@ func init() {
 			if addr != `` {
 				cfg.Web.Addr = addr
 			}
+			if dev {
+				cfg.Dev = true
+			}
 			e = web.Run(&cfg)
 			if e != nil {
 				os.Exit(1)
@@ -70,6 +74,11 @@ func init() {
 		`a`,
 		``,
 		`listen address (default "`+defaultAddr+`")`,
+	)
+	flags.BoolVarP(&dev, `dev`,
+		`d`,
+		false,
+		`run as dev`,
 	)
 	rootCmd.AddCommand(cmd)
 }

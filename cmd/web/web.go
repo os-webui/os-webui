@@ -18,7 +18,9 @@ import (
 
 // Run bootstraps the Gin web engine with standard library native h2c support
 func Run(cfg *config.Config) error {
-	gin.SetMode(gin.ReleaseMode)
+	if !cfg.Dev {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	r := gin.New()
 	r.Use(gin.Recovery())
