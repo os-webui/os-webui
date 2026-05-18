@@ -49,7 +49,7 @@ case "$1" in
     run)
         shift
         cd "$BashDir/bin"
-        ./os-webui web -c os-webui.yaml
+        ./os-webui web -c os-webui.js
         exit $?
     ;;
     docker)
