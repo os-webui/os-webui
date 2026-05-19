@@ -2,41 +2,40 @@ package config
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/google/go-jsonnet"
-	"github.com/os-webui/os-webui/internal/utils"
+	"gopkg.in/yaml.v3"
 )
 
 // Config represents the core configuration architecture
 type Config struct {
-	Dev     bool         `json:"dev"`
-	Web     WebConfig    `json:"web"`
-	Plugins PluginConfig `json:"plugins"`
+	Dev     bool         `yaml:"dev"`
+	Web     WebConfig    `yaml:"web"`
+	Plugins PluginConfig `yaml:"plugins"`
 }
 
 // WebConfig defines the underlying web service routing
 type WebConfig struct {
-	Network string    `json:"network"` // tcp, tcp4, unix
-	Addr    string    `json:"addr"`    // listen address
-	TLS     TLSConfig `json:"tls"`
+	Network string    `yaml:"network"` // tcp, tcp4, unix
+	Addr    string    `yaml:"addr"`    // listen address
+	TLS     TLSConfig `yaml:"tls"`
 }
 
 // TLSConfig handles certificates and multiplexing protocols
 type TLSConfig struct {
-	CertFile string   `json:"certFile"`
-	KeyFile  string   `json:"keyFile"`
-	CertText string   `json:"certText"`
-	CertKey  string   `json:"certKey"`
-	ALPN     []string `json:"alpn"`
+	CertFile string   `yaml:"certFile"`
+	KeyFile  string   `yaml:"keyFile"`
+	CertText string   `yaml:"certText"`
+	CertKey  string   `yaml:"certKey"`
+	ALPN     []string `yaml:"alpn"`
 }
 
 // PluginConfig handles directory bindings for isolation
 type PluginConfig struct {
-	Install string `json:"install"` // read-only plugin code dir
-	Data    string `json:"data"`    // stateful plugin data dir
-	Config  string `json:"config"`  // stateful plugin config dir
+	Install string `yaml:"install"` // read-only plugin code dir
+	Data    string `yaml:"data"`    // stateful plugin data dir
+	Config  string `yaml:"config"`  // stateful plugin config dir
 }
 
 // LoadConfig parses the JavaScript configuration file from the given path into the provided cfg pointer
@@ -45,13 +44,12 @@ func LoadConfig(path string, cfg *Config) error {
 	if cfg == nil {
 		return fmt.Errorf("configuration destination pointer cannot be nil")
 	}
-	vm := jsonnet.MakeVM()
-	jsonStr, err := vm.EvaluateFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("jsonnet evaluation failed: %w", err)
+		return fmt.Errorf("failed to read config file: %w", err)
 	}
-	if err = json.Unmarshal(utils.StringToBytes(jsonStr), cfg); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON payload into config struct: %w", err)
+	if err := yaml.Unmarshal(file, &cfg); err != nil {
+		return fmt.Errorf("invalid configuration syntax: %w", err)
 	}
 	return nil
 }
