@@ -18,6 +18,7 @@ function help(){
     echo "Available Commands:"
     echo "  help              help for $0"
     echo "  clear             clear output"
+    echo "  symbols           build yaegi symbols"
     echo "  go                go build helper"
     echo "  pack              pack release"
     echo "  run               run project"
@@ -35,6 +36,11 @@ case "$1" in
         shift
         export Command="$0 clear"
         "$BashDir/script/clear.sh" "$@"
+    ;;
+    symbols)
+        shift
+        export Command="$0 symbols"
+        "$BashDir/script/symbols.sh" "$@"
     ;;
     pack)
         shift

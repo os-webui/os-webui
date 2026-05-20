@@ -33,3 +33,4 @@ go.work.sum
 
 os-webui
 /bin
+/internal/symbols/

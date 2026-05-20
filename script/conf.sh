@@ -9,3 +9,7 @@ Platforms=(
     linux/arm64
     linux/amd64
 )
+GOLIB=(
+    github.com/os-webui/os-webui/sdk
+    go.etcd.io/bbolt
+)

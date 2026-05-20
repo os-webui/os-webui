@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/os-webui/os-webui/internal/symbols"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/traefik/yaegi/stdlib/syscall"
@@ -65,7 +66,12 @@ func NewPlugin(dir, name string) (*Plugin, error) {
 	if e = os.Setenv("YAEGI_UNRESTRICTED", "1"); e != nil {
 		return nil, e
 	}
+	e = i.Use(symbols.Symbols)
+	if e != nil {
+		return nil, e
+	}
 
+	// Eval
 	_, e = i.EvalPath(name)
 	if e != nil {
 		return nil, e
@@ -78,7 +84,7 @@ func NewPlugin(dir, name string) (*Plugin, error) {
 	if keys == nil {
 		return nil, errors.New(`not found Package: ` + name)
 	}
-	
+
 	fmt.Println(keys)
 	// if pkgs == nil {
 	// 	return fmt.Errorf(`func () not found: %s`, name)
