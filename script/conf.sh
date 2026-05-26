@@ -11,5 +11,6 @@ Platforms=(
 )
 GOLIB=(
     github.com/os-webui/os-webui/sdk
+    github.com/nicksnyder/go-i18n/v2/i18n
     go.etcd.io/bbolt
 )

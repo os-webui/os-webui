@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"sync"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -10,25 +11,23 @@ import (
 type Context interface {
 	context.Context
 
+	Install() string
+
 	// Config returns the stateful customized configuration file directory path
 	Config() string
 
 	// Data returns the stateful database/log storage file directory path
 	Data() string
 
-	// Locale returns the standard client language identifier, e.g., 'en', 'zh-Hant'
-	Locale() string
+	ID() string
 
-	// Get input
-	Input(id string) (any, bool)
-	// Get input
-	InputString(id string) (string, bool)
+	// // Get input
+	// Input(id string,output any) (string, bool)
 
-	// Push output
-	OutputString(id string, value string)
+	// // Push output
+	// Output(id string, value any)
 
-	Set(id string, value []byte) error
-	Get(id string) []byte
+	Map() *sync.Map
 	DB() (*bolt.DB, error)
 }
 

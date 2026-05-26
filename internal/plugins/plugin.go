@@ -2,13 +2,11 @@ package plugins
 
 import (
 	"errors"
-	"fmt"
-	"io/fs"
+	"log/slog"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/os-webui/os-webui/internal/symbols"
+	"github.com/os-webui/os-webui/sdk"
 	"github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 	"github.com/traefik/yaegi/stdlib/syscall"
@@ -16,29 +14,45 @@ import (
 	"github.com/traefik/yaegi/stdlib/unsafe"
 )
 
-type FS string
-
-func (s FS) Open(name string) (fs.File, error) {
-	if !strings.HasPrefix(name, magicDirSrc) {
-		return nil, os.ErrNotExist
-	}
-	name = filepath.Clean(filepath.Join(string(s), name[len(magicDirSrc):]))
-	if len(name) < len(s)+1 ||
-		name[len(s)] != filepath.Separator ||
-		!strings.HasPrefix(name, string(s)) {
-		return nil, os.ErrNotExist
-	}
-	return os.Open(name)
-}
-
 type Plugin struct {
+	sdk.Plugin
+	metadata *PluginMeta
+	ctx      Context
 }
 
-const magicDir = `48f8dc68666c4283a8887e0c25303c0b_5182346e341446cb8f4943f254226fbc`
+func New(log *slog.Logger,
+	install, config, data,
+	id string) (ret *Plugin, e error) {
+	log = log.With(`plugin`, id)
+	metadata, e := LoadPluginMeta(install, id)
+	if e != nil {
+		log.Error(`failed to load plugin meta`, `error`, e)
+		return
+	}
+	plugin, e := NewPlugin(install, id)
+	if e != nil {
+		log.Error(`failed to new plugin`, `error`, e)
+		return
+	}
 
-var magicDirSrc = filepath.Join(magicDir, `src`)
+	cl, e := newContext(install, config, data, id)
+	if e != nil {
+		log.Error(`failed to new Context`, `error`, e)
+		return
+	}
 
-func NewPlugin(dir, name string) (*Plugin, error) {
+	ctx := Context{
+		contextLow: cl,
+	}
+	ret = &Plugin{
+		Plugin:   plugin,
+		metadata: metadata,
+		ctx:      ctx,
+	}
+	return
+}
+
+func NewPlugin(dir, name string) (sdk.Plugin, error) {
 	i := interp.New(interp.Options{
 		GoPath:               magicDir,
 		SourcecodeFilesystem: FS(dir),
@@ -84,14 +98,14 @@ func NewPlugin(dir, name string) (*Plugin, error) {
 	if keys == nil {
 		return nil, errors.New(`not found Package: ` + name)
 	}
+	fi, ok := keys[`New`]
+	if !ok {
+		return nil, errors.New(`not found func: New`)
+	}
+	pluginNew, ok := fi.Interface().(func() sdk.Plugin)
+	if !ok {
+		return nil, errors.New(`func signature mismatch, should func() (sdk.Plugin)`)
+	}
 
-	fmt.Println(keys)
-	// if pkgs == nil {
-	// 	return fmt.Errorf(`func () not found: %s`, name)
-	// }
-	// keys := pkgs[c.path]
-	// if keys == nil {
-	// 	return fmt.Errorf(`func () not found: %s`, name)
-	// }
-	return &Plugin{}, nil
+	return pluginNew(), nil
 }
