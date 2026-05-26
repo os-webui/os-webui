@@ -12,3 +12,7 @@ func newFuncOption[T any](f func(T)) *funcOption[T] {
 		f: f,
 	}
 }
+
+type Option[T any] interface {
+	apply(T)
+}
