@@ -14,10 +14,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/os-webui/os-webui/config"
+	"github.com/os-webui/os-webui/internal/plugins"
 )
 
 // Run bootstraps the Gin web engine with standard library native h2c support
-func Run(cfg *config.Config) error {
+func runWeb(cfg *config.Config, slog *slog.Logger) error {
 	if !cfg.Dev {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -90,6 +91,8 @@ func Run(cfg *config.Config) error {
 		}
 	}
 
+	plugins.DefaultPluginsManager.Cleanup(slog)
+
 	slog.Info("os-webui runtime terminated gracefully. all systems clear.")
 	return nil
 }
@@ -103,7 +106,20 @@ func setupRoutes(r *gin.Engine) {
 		})
 	})
 
-	r.GET("/ws", func(c *gin.Context) {
-		c.String(http.StatusOK, "websocket tunnel context endpoint ready")
-	})
+	router := r.Group(`/api/v1/plugins`)
+
+	router.GET(``, notImplemented)
+	router.GET(`:id`, notImplemented)
+	router.GET(`:id/features`, notImplemented)
+	router.GET(`:id/run`, notImplemented)
+	router.GET(`:id/attach`, notImplemented)
+	router.GET(`:id/history`, notImplemented)
+
+	router = r.Group(`/api/v1/store`)
+	router.GET(``)
+	router.POST(`:id`)
+	router.DELETE(`:id`)
+}
+func notImplemented(c *gin.Context) {
+	c.Status(http.StatusNotImplemented)
 }

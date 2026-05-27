@@ -4,6 +4,8 @@ import (
 	"errors"
 	"log/slog"
 	"os"
+	"regexp"
+	"runtime"
 
 	"github.com/os-webui/os-webui/internal/symbols"
 	"github.com/os-webui/os-webui/sdk"
@@ -14,10 +16,21 @@ import (
 	"github.com/traefik/yaegi/stdlib/unsafe"
 )
 
+// 🌟 Regular Expression Explanation:
+// ^[a-zA-Z]      : Assures the string starts with an uppercase or lowercase English letter.
+// [a-zA-Z0-9_-]* : Followed by zero or more letters, numbers, hyphens, or underscores.
+// $              : Assures the match extends to the absolute end of the string.
+var matchID = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9_-]*$`)
+
+// MatchID validates if the given plugin or feature ID adheres to the panel's naming convention.
+func MatchID(id string) bool {
+	return matchID.MatchString(id)
+}
+
 type Plugin struct {
-	sdk.Plugin
+	plugin   sdk.Plugin
 	metadata *PluginMeta
-	ctx      Context
+	ctx      sdk.Context
 }
 
 func New(log *slog.Logger,
@@ -29,23 +42,36 @@ func New(log *slog.Logger,
 		log.Error(`failed to load plugin meta`, `error`, e)
 		return
 	}
+	if len(metadata.Platform) != 0 {
+		platform := runtime.GOOS + `/` + runtime.GOARCH
+		ok := false
+		for _, v := range metadata.Platform {
+			if platform == v {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			log.Warn(platform+` is not on the list of supported platforms`, `platform`, metadata.Platform)
+			return
+		}
+	}
 	plugin, e := NewPlugin(install, id)
 	if e != nil {
 		log.Error(`failed to new plugin`, `error`, e)
 		return
 	}
 
-	cl, e := newContext(install, config, data, id)
+	cl, e := newContext(log, install, config, data, id, metadata.Version)
 	if e != nil {
 		log.Error(`failed to new Context`, `error`, e)
 		return
 	}
-
-	ctx := Context{
+	ctx := &Context{
 		contextLow: cl,
 	}
 	ret = &Plugin{
-		Plugin:   plugin,
+		plugin:   plugin,
 		metadata: metadata,
 		ctx:      ctx,
 	}
@@ -108,4 +134,14 @@ func NewPlugin(dir, name string) (sdk.Plugin, error) {
 	}
 
 	return pluginNew(), nil
+}
+func (p *Plugin) Metadata() *PluginMeta {
+	return p.metadata
+}
+func (p *Plugin) Startup() error {
+	return p.plugin.OnStartup(p.ctx)
+}
+
+func (p *Plugin) Cleanup()  {
+	 p.plugin.OnCleanup(p.ctx)
 }
