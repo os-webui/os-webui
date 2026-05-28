@@ -1,0 +1,16 @@
+{
+    "theme": {
+        "label": "主題",
+        "dark": "暗黑",
+        "light": "明亮",
+        "auto": "自動"
+    },
+    "lang": {
+        "label": "語言",
+        "auto": "系統語言"
+    },
+    "main": {
+        "about": "關於",
+        "home": "首頁"
+    }
+}

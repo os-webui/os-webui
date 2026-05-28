@@ -12,8 +12,8 @@ func InitRouter(api *gin.RouterGroup) {
 	var plugins Plugins
 	router := v1.Group(`plugins`)
 	router.GET(``, plugins.List)
-	router.GET(`:id`, notImplemented)
-	router.GET(`:id/features`, notImplemented)
+	router.GET(`:id`, plugins.Get)
+	router.GET(`:id/features`, plugins.Features)
 	router.GET(`:id/run`, notImplemented)
 	router.GET(`:id/attach`, notImplemented)
 	router.GET(`:id/history`, notImplemented)
@@ -24,5 +24,6 @@ func InitRouter(api *gin.RouterGroup) {
 	router.DELETE(`:id`, notImplemented)
 }
 func notImplemented(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	c.String(http.StatusNotImplemented, `not implemented
+`)
 }

@@ -12,5 +12,8 @@ Platforms=(
 GOLIB=(
     github.com/os-webui/os-webui/sdk
     github.com/nicksnyder/go-i18n/v2/i18n
+    github.com/pelletier/go-toml/v2
+    gopkg.in/yaml.v3
+    golang.org/x/text/language
     go.etcd.io/bbolt
 )

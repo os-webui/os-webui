@@ -1,0 +1,16 @@
+{
+    "theme": {
+        "label": "主题",
+        "dark": "暗黑",
+        "light": "明亮",
+        "auto": "自动"
+    },
+    "lang": {
+        "label": "语言",
+        "auto": "系统语言"
+    },
+    "main": {
+        "about": "关于",
+        "home": "首页"
+    }
+}

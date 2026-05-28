@@ -1,7 +1,9 @@
 package plugins
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"regexp"
@@ -30,7 +32,7 @@ func MatchID(id string) bool {
 type Plugin struct {
 	plugin   sdk.Plugin
 	metadata *PluginMeta
-	ctx      sdk.Context
+	ctx      *Context
 }
 
 func New(log *slog.Logger,
@@ -78,7 +80,7 @@ func New(log *slog.Logger,
 	return
 }
 
-func NewPlugin(dir, name string) (sdk.Plugin, error) {
+func NewPlugin(dir, name string) (ret sdk.Plugin, err error) {
 	i := interp.New(interp.Options{
 		GoPath:               magicDir,
 		SourcecodeFilesystem: FS(dir),
@@ -111,6 +113,11 @@ func NewPlugin(dir, name string) (sdk.Plugin, error) {
 		return nil, e
 	}
 
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf(`%v`, p)
+		}
+	}()
 	// Eval
 	_, e = i.EvalPath(name)
 	if e != nil {
@@ -120,6 +127,7 @@ func NewPlugin(dir, name string) (sdk.Plugin, error) {
 	if pkgs == nil {
 		return nil, errors.New(`not found Symbols: ` + name)
 	}
+
 	keys := pkgs[name]
 	if keys == nil {
 		return nil, errors.New(`not found Package: ` + name)
@@ -132,7 +140,6 @@ func NewPlugin(dir, name string) (sdk.Plugin, error) {
 	if !ok {
 		return nil, errors.New(`func signature mismatch, should func() (sdk.Plugin)`)
 	}
-
 	return pluginNew(), nil
 }
 func (p *Plugin) Metadata() *PluginMeta {
@@ -144,4 +151,42 @@ func (p *Plugin) Startup() error {
 
 func (p *Plugin) Cleanup() {
 	p.plugin.OnCleanup(p.ctx)
+}
+
+type FeatureInfo struct {
+	ID       string `json:"id,omitempty"`
+	Metadata sdk.M  `json:"metadata,omitempty"`
+}
+
+func (p *Plugin) Features(c context.Context, acceptLanguage string) ([]FeatureInfo, error) {
+	ctx, cancel := context.WithCancelCause(c)
+	defer cancel(context.Canceled)
+	go func() {
+		select {
+		case <-p.ctx.contextLow.ctx.Done():
+			cancel(p.ctx.contextLow.ctx.Err())
+		case <-ctx.Done():
+			cancel(ctx.Err())
+		}
+	}()
+
+	newCTX := &Context{
+		contextLow:     p.ctx.contextLow,
+		ctx:            ctx,
+		acceptLanguage: acceptLanguage,
+	}
+	features := p.plugin.Features(newCTX)
+	items := make([]FeatureInfo, len(features))
+	for i, feature := range features {
+		id := feature.ID()
+		metadata, err := feature.Metadata(newCTX)
+		if err != nil {
+			return nil, err
+		}
+		items[i] = FeatureInfo{
+			ID:       id,
+			Metadata: metadata,
+		}
+	}
+	return items, nil
 }

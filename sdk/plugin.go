@@ -9,7 +9,7 @@ import (
 
 // UI defines a reactive presentation layer interface for dynamic data exchange
 // between the system backend and front-end layout rendering engines.
-type UI interface {
+type WebUI interface {
 	// Get extracts an input argument mapped to the specific layout identifier.
 	// It decodes the payload into the destination object and returns its raw representation.
 	Get(id string, jsonObjectPointer any) bool
@@ -22,6 +22,7 @@ type UI interface {
 // It fully wraps the native Go context.Context, empowering pluggable extensions with lifecycle-aware control streams.
 type Context interface {
 	Context() context.Context
+	AcceptLanguage() string
 
 	Log() *slog.Logger
 
@@ -54,7 +55,7 @@ type Context interface {
 	DB(context.Context) (*bolt.DB, error)
 
 	// UI provisions access to the interactive user interface rendering pipeline coupled to the active execution cycle.
-	UI() UI
+	UI() WebUI
 }
 
 // Plugin specifies the standardized structural lifecycle control loop contracts required to construct
@@ -78,11 +79,57 @@ type Plugin interface {
 
 // Feature represents an atomic, isolated operational routing capability block exposed to front-end UI clients.
 type Feature interface {
+	ID() string
 	// Metadata outputs a standardized JSON Schema or declarative schema template string.
 	// Front-end dashboard components utilize this schema blueprint to render automated input/output forms and validate contracts.
-	Metadata(ctx Context) (string, error)
+	Metadata(ctx Context) (M, error)
 
 	// Run executes the core business capability logic of the target feature.
 	// Inputs and structural responses are multiplexed implicitly via the provided responsive sdk.Context model.
 	Run(ctx Context) (err error)
 }
+type M map[string]any
+
+// type Metadata struct {
+// 	Name        string `json:"name,omitempty"`
+// 	Description string `json:"description,omitempty"`
+// 	Input       UI     `json:"input,omitempty"`
+// 	Output      UI     `json:"output,omitempty"`
+// }
+
+// type UIOption struct {
+// 	Label string `json:"label,omitempty"`
+// 	Value any    `json:"value,omitempty"`
+// }
+// type UI struct {
+// 	ID string `json:"id,omitempty"`
+
+// 	Tag string `json:"tag,omitempty"`
+
+// 	Label string `json:"label,omitempty"`
+
+// 	Tooltip string `json:"tooltip,omitempty"`
+// 	Text string `json:"text,omitempty"`
+
+// 	Value any `json:"value,omitempty"`
+
+// 	Options []UIOption `json:"options,omitempty"`
+
+// 	// primeflex class see: https://primeflex.org/
+// 	Class string `json:"class,omitempty"`
+
+// 	Flags map[string]any `json:"flags,omitempty"`
+
+// 	Children []UI `json:"children,omitempty"`
+// }
+
+// const (
+// 	TagDiv  = `div`
+// 	TagP    = `p`
+// 	TagSpan = `span`
+// 	TagBR   = `br`
+// 	TagPre  = `pre`
+
+// 	TagButton = `button`
+// 	TagSelect = `Select`
+// )

@@ -1,0 +1,16 @@
+{
+    "theme": {
+        "label": "Theme",
+        "dark": "Dark",
+        "light": "Light",
+        "auto": "Auto"
+    },
+    "lang": {
+        "labe": "Lang",
+        "auto": "System Lang"
+    },
+    "main": {
+        "about": "About",
+        "home": "Home"
+    }
+}

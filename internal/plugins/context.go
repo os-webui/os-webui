@@ -14,11 +14,12 @@ import (
 
 type Context struct {
 	*contextLow
-	ui  sdk.UI
-	ctx context.Context
+	ui             sdk.WebUI
+	ctx            context.Context
+	acceptLanguage string
 }
 
-func (c *Context) UI() sdk.UI {
+func (c *Context) UI() sdk.WebUI {
 	return c.ui
 }
 func (c *Context) Context() context.Context {
@@ -26,6 +27,9 @@ func (c *Context) Context() context.Context {
 		return c.contextLow.ctx
 	}
 	return c.ctx
+}
+func (c *Context) AcceptLanguage() string {
+	return c.acceptLanguage
 }
 
 type contextLow struct {
