@@ -142,6 +142,6 @@ func (p *Plugin) Startup() error {
 	return p.plugin.OnStartup(p.ctx)
 }
 
-func (p *Plugin) Cleanup()  {
-	 p.plugin.OnCleanup(p.ctx)
+func (p *Plugin) Cleanup() {
+	p.plugin.OnCleanup(p.ctx)
 }

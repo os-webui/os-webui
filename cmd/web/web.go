@@ -15,29 +15,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/os-webui/os-webui/config"
 	"github.com/os-webui/os-webui/internal/plugins"
+	v1 "github.com/os-webui/os-webui/web/v1"
 )
 
 // Run bootstraps the Gin web engine with standard library native h2c support
-func runWeb(cfg *config.Config, slog *slog.Logger) error {
-	if !cfg.Dev {
+func runWeb(cfg *config.WebConfig, dev bool, slog *slog.Logger) error {
+	if !dev {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	r := gin.New()
 	r.Use(gin.Recovery())
 
-	setupRoutes(r)
+	setupRoutes(r, cfg)
 
 	// 1. Establish the native core network listener (supports tcp, tcp4, unix)
-	listener, err := net.Listen(cfg.Web.Network, cfg.Web.Addr)
+	listener, err := net.Listen(cfg.Network, cfg.Addr)
 	if err != nil {
-		slog.Error("failed to bind network listener", "network", cfg.Web.Network, "address", cfg.Web.Addr, "error", err)
+		slog.Error("failed to bind network listener", "network", cfg.Network, "address", cfg.Addr, "error", err)
 		return err
 	}
 	defer listener.Close()
 
 	// 2. Evaluate and inject TLS cryptography abstraction layer
-	tlsConfig, err := cfg.Web.TLS.MakeTLSConfig()
+	tlsConfig, err := cfg.TLS.MakeTLSConfig()
 	if err != nil {
 		slog.Error("failed to compile TLS configuration", "error", err)
 		return err
@@ -65,7 +66,7 @@ func runWeb(cfg *config.Config, slog *slog.Logger) error {
 	defer stop()
 
 	go func() {
-		slog.Info("os-webui engine interface online", "network", cfg.Web.Network, "address", cfg.Web.Addr, "native_h2c", true)
+		slog.Info("os-webui engine interface online", "network", cfg.Network, "address", cfg.Addr, "native_h2c", true)
 		if err := srv.Serve(listener); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			slog.Error("critical crash caught inside native server listener", "error", err)
 			os.Exit(1)
@@ -83,9 +84,9 @@ func runWeb(cfg *config.Config, slog *slog.Logger) error {
 		return err
 	}
 
-	if cfg.Web.Network == "unix" {
-		if err := os.Remove(cfg.Web.Addr); err != nil && !os.IsNotExist(err) {
-			slog.Warn("unable to purge dangling unix socket descriptor", "path", cfg.Web.Addr, "error", err)
+	if cfg.Network == "unix" {
+		if err := os.Remove(cfg.Addr); err != nil && !os.IsNotExist(err) {
+			slog.Warn("unable to purge dangling unix socket descriptor", "path", cfg.Addr, "error", err)
 		} else {
 			slog.Debug("unix socket descriptor successfully unlinked from host entry")
 		}
@@ -97,7 +98,7 @@ func runWeb(cfg *config.Config, slog *slog.Logger) error {
 	return nil
 }
 
-func setupRoutes(r *gin.Engine) {
+func setupRoutes(r *gin.Engine, cfg *config.WebConfig) {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "healthy",
@@ -105,21 +106,10 @@ func setupRoutes(r *gin.Engine) {
 			"proto":   c.Request.Proto, // Prints "HTTP/2.0" instantly under native h2c client connection
 		})
 	})
+	api := r.Group(`/api`)
+	if len(cfg.Accounts) != 0 {
+		api.Use(gin.BasicAuthForRealm(cfg.Accounts, `os-webui`))
+	}
 
-	router := r.Group(`/api/v1/plugins`)
-
-	router.GET(``, notImplemented)
-	router.GET(`:id`, notImplemented)
-	router.GET(`:id/features`, notImplemented)
-	router.GET(`:id/run`, notImplemented)
-	router.GET(`:id/attach`, notImplemented)
-	router.GET(`:id/history`, notImplemented)
-
-	router = r.Group(`/api/v1/store`)
-	router.GET(``)
-	router.POST(`:id`)
-	router.DELETE(`:id`)
-}
-func notImplemented(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
+	v1.InitRouter(api)
 }

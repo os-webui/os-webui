@@ -69,6 +69,7 @@ func initplugin(cfg *config.PluginConfig, slog *slog.Logger) error {
 		err := plugin.Startup()
 		if err != nil {
 			slog.Warn(`failed to plugin startup`, `id`, metadata.ID, `version`, metadata.Version, `error`, err)
+			continue
 		}
 		plugins.DefaultPluginsManager.Add(metadata.ID, plugin)
 	}

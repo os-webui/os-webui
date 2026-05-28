@@ -5,19 +5,22 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/goccy/go-yaml"
+	"gopkg.in/yaml.v3"
 )
 
+type PluginInfo struct {
+	ID       string   `yaml:"id" json:"id,omitempty"`
+	Version  string   `yaml:"version" json:"version,omitempty"`
+	Author   string   `yaml:"author" json:"author,omitempty"`
+	Name     string   `yaml:"name" json:"name,omitempty"`
+	Platform []string `yaml:"platform" json:"platform,omitempty"`
+
+	Description string `yaml:"description" json:"description,omitempty"`
+}
+
 type PluginMeta struct {
-	ID       string   `yaml:"id"`
-	Version  string   `yaml:"version"`
-	Author   string   `yaml:"author"`
-	Name     string   `yaml:"name"`
-	Platform []string `yaml:"platform"`
-
-	Description string `yaml:"description"`
-
-	I18n map[string]map[string]string `yaml:"i18n"`
+	PluginInfo `yaml:",inline"`
+	I18n       map[string]map[string]string `yaml:"i18n"`
 }
 
 func LoadPluginMeta(dir, id string) (ret *PluginMeta, e error) {

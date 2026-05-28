@@ -14,5 +14,5 @@ func Run(cfg *config.Config) error {
 	if err != nil {
 		return nil
 	}
-	return runWeb(cfg, log)
+	return runWeb(&cfg.Web, cfg.Dev, log)
 }
