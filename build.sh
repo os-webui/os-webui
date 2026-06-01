@@ -55,7 +55,7 @@ case "$1" in
     run)
         shift
         cd "$BashDir/bin"
-        ./os-webui web -c os-webui.yaml --dev
+        ./os-webui web -c os-webui.yaml --addr :9000 --dev
         exit $?
     ;;
     docker)

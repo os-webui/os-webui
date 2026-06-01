@@ -4,7 +4,9 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 
+	"github.com/os-webui/os-webui/internal/utils"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,6 +39,7 @@ func LoadPluginMeta(dir, id string) (ret *PluginMeta, e error) {
 		e = errors.New(`plugin id not matched: ` + metadata.ID)
 		return
 	}
+	sort.Sort(utils.StringSort(metadata.Platform))
 	ret = &metadata
 	return
 }

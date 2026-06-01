@@ -11,6 +11,13 @@
     },
     "main": {
         "about": "关于",
-        "home": "首页"
+        "home": "首页",
+        "error": "错误",
+        "retry": "重试",
+        "store": "插件商店"
+    },
+    "plugins": {
+        "emby": "没有可用插件",
+        "fromStore": "从商店安装"
     }
 }

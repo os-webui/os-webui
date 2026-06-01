@@ -11,6 +11,13 @@
     },
     "main": {
         "about": "About",
-        "home": "Home"
+        "home": "Home",
+        "error": "Error",
+        "retry": "Retry",
+        "store": "Plugins Store"
+    },
+    "plugins": {
+        "emby": "No plugins available",
+        "fromStore": "Install from the store"
     }
 }

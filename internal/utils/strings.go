@@ -17,3 +17,17 @@ func StringToBytes(s string) []byte {
 	}
 	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
+
+type StringSort []string
+
+func (s StringSort) Len() int {
+	return len(s)
+}
+
+func (s StringSort) Less(i, j int) bool {
+	return s[i] < s[j]
+}
+
+func (s StringSort) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}

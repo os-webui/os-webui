@@ -11,6 +11,13 @@
     },
     "main": {
         "about": "關於",
-        "home": "首頁"
+        "home": "首頁",
+        "error": "錯誤",
+        "retry": "重試",
+        "store": "插件商店"
+    },
+    "plugins": {
+        "emby": "沒有可用插件",
+        "fromStore": "從商店安裝"
     }
 }
