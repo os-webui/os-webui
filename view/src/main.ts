@@ -13,14 +13,14 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(createI18n({
-    legacy: false,
-    locale: 'en-us',
-    fallbackLocale: 'en-us',
-    messages: {
-        'zh-tw': zhTW,
-        'zh-cn': zhCN,
-        'en-us': enUS,
-    }
+  legacy: false,
+  locale: 'en-US',
+  fallbackLocale: 'en-US',
+  messages: {
+    'zh-TW': zhTW,
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  }
 }))
 app.use(router)
 

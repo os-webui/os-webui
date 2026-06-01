@@ -24,19 +24,19 @@ export interface Locale {
  */
 export const Locales: Locale[] = [
   {
-    id: 'en-us',
+    id: 'en-US',
     name: '🇺🇸 English',
     message: enUS,
     date: dateEnUS,
   },
   {
-    id: 'zh-tw',
+    id: 'zh-TW',
     name: '🇹🇼 繁體中文',
     message: zhTW,
     date: dateZhTW,
   },
   {
-    id: 'zh-cn',
+    id: 'zh-CN',
     name: '🇨🇳 简体中文',
     message: zhCN,
     date: dateZhCN,

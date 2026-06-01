@@ -22,6 +22,6 @@ export function createHomePage() {
   return {
     abort: abort,
     loader: loader,
-    plugins:plugins,
+    plugins: plugins,
   }
 }
