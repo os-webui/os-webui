@@ -95,7 +95,7 @@ func (m *PluginsManager) List(acceptLanguage string) []PluginInfo {
 	}
 	return items
 }
-func (m *PluginsManager) Get(id, acceptLanguage string) (PluginInfo, bool) {
+func (m *PluginsManager) Get(id, acceptLanguage string) (*Plugin, PluginInfo, bool) {
 	strs := strings.FieldsFunc(acceptLanguage, func(r rune) bool {
 		return r == ',' || r == ';' || r == ' '
 	})
@@ -111,7 +111,7 @@ func (m *PluginsManager) Get(id, acceptLanguage string) (PluginInfo, bool) {
 	defer m.rw.RUnlock()
 	p, ok := m.plugins[id]
 	if !ok {
-		return PluginInfo{}, false
+		return nil, PluginInfo{}, false
 	}
 
 	metadata := p.metadata
@@ -143,5 +143,5 @@ func (m *PluginsManager) Get(id, acceptLanguage string) (PluginInfo, bool) {
 			}
 		}
 	}
-	return info, true
+	return p, info, true
 }

@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { type PluginInfo, type Props } from './HomeView'
+import { type Props } from './HomeView'
 import {
   NCard, NTag, NSpace, NBadge, NEmpty, NButton
 } from 'naive-ui';
 const offset = [10, -5] as const
-function onClick(item: PluginInfo) {
-  console.log(item)
-}
+
 defineProps<Props>()
 
 </script>
@@ -17,7 +15,7 @@ defineProps<Props>()
         <n-card :segmented="{
           content: true,
           footer: 'soft',
-        }" hoverable @click="onClick(item)">
+        }" hoverable>
           <template #header>
             <n-badge :value="item.version" type="success" :offset="offset" v-if="item.version && item.version !== ''">
               {{ item.name }}
@@ -55,7 +53,6 @@ defineProps<Props>()
 <style scoped>
 .n-card {
   height: 100%;
-  cursor: pointer;
 }
 
 .plain-link {
