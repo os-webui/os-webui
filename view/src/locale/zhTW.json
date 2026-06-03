@@ -10,12 +10,15 @@
         "auto": "系統語言"
     },
     "main": {
+        "notFound": "未找到",
         "404": "404 未找到頁面",
         "about": "關於",
         "home": "首頁",
         "error": "錯誤",
         "retry": "重試",
-        "store": "插件商店"
+        "store": "插件商店",
+        "plugin": "插件",
+        "feature": "特性"
     },
     "plugins": {
         "emby": "沒有可用插件",

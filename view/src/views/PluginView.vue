@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useTitle } from '@/stores/title';
 import { type Props } from './PluginView'
 import {
   NCard, NTag, NSpace, NBadge, NDivider
 } from 'naive-ui';
 const offset = [10, -5] as const
-defineProps<Props>()
+const props = defineProps<Props>()
+const title = useTitle()
+title.set(props.plugin.info.name)
 </script>
 <template>
   <n-card :segmented="{

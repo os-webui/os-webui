@@ -10,26 +10,38 @@ const router = createRouter({
     {
       path: '/',
       component: HomePage,
+      meta: {
+        title: '',
+      },
     },
     {
       path: '/plugin/:id',
       component: PluginPage,
+      meta: {
+        title: 'main.plugin',
+      },
     },
     {
       path: '/about',
       component: AboutView,
-      // component: () => import('../views/AboutView.vue'), // lazy-loaded
+      meta: {
+        title: 'main.about',
+      },
     },
     {
       path: '/store',
       component: StorePage,
+      meta: {
+        title: 'main.store',
+      },
     },
-
     {
       path: '/:pathMatch(.*)*',
       component: NotFoundPage,
+      meta: {
+        title: 'main.notFound',
+      },
     }
   ],
 })
-
 export default router

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onUnmounted, onMounted, watchEffect } from 'vue'
 import NavBar from '@/components/NavBar.vue'
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import {
   NConfigProvider, NGlobalStyle,
   NButton, NIcon, NTooltip
@@ -20,6 +20,8 @@ import LangMenu from '@/components/LangMenu.vue'
 // import DevMenu from '@/components/DevMenu.vue'
 
 import { useLocaleStore } from './stores/locale'
+import { useTitle } from './stores/title'
+
 const theme = useThemeStore()
 const breakpoint = useBreakpointStore()
 const i18n = useI18n()
@@ -41,7 +43,27 @@ onUnmounted(() => {
     cleanupBreakpoint()
   }
 })
-i18n.locale
+
+
+const title = useTitle()
+useRouter().beforeEach((to) => {
+  const pageTitle = to.meta.title
+  title.set(typeof pageTitle === "string" ? pageTitle : '')
+})
+watchEffect(() => {
+  title.updateTitle()
+  const val = title.get
+  const main = title.title
+  if (val === '') {
+    i18n.t('main.home')
+    document.title = main
+  } else if (val.startsWith('main.')) {
+    document.title = i18n.t(`${val}`) + ' - ' + main
+  } else {
+    i18n.t('main.home')
+    document.title = `${val} - ${main}`
+  }
+})
 </script>
 
 <template>

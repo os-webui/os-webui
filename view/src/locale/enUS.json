@@ -10,12 +10,15 @@
         "auto": "System Lang"
     },
     "main": {
+        "notFound": "Not Found",
         "404": "404 Not Found",
         "about": "About",
         "home": "Home",
         "error": "Error",
         "retry": "Retry",
-        "store": "Plugins Store"
+        "store": "Plugins Store",
+        "plugin": "Plugin",
+        "feature": "Feature"
     },
     "plugins": {
         "emby": "No plugins available",

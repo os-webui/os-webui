@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/os-webui/os-webui/config"
 	"github.com/os-webui/os-webui/internal/plugins"
+	"github.com/os-webui/os-webui/version"
+	"github.com/os-webui/os-webui/web"
 	v1 "github.com/os-webui/os-webui/web/v1"
 )
 
@@ -99,17 +102,34 @@ func runWeb(cfg *config.WebConfig, dev bool, slog *slog.Logger) error {
 }
 
 func setupRoutes(r *gin.Engine, cfg *config.WebConfig) {
+	var web web.Web
 	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
+		web.NegotiateData(c, http.StatusOK, gin.H{
 			"status":  "healthy",
 			"runtime": "go-native",
 			"proto":   c.Request.Proto, // Prints "HTTP/2.0" instantly under native h2c client connection
 		})
 	})
 	api := r.Group(`/api`)
-	if len(cfg.Accounts) != 0 {
-		api.Use(gin.BasicAuthForRealm(cfg.Accounts, `os-webui`))
+	title := strings.TrimSpace(cfg.Title)
+	if title == `` {
+		title = `OS WebUI`
 	}
-
+	if len(cfg.Accounts) != 0 {
+		api.Use(gin.BasicAuthForRealm(cfg.Accounts, title))
+	}
+	api.GET(`title`, func(c *gin.Context) {
+		web.NegotiateData(c, http.StatusOK, title)
+	})
+	at := time.Now()
+	api.GET(`version`, func(c *gin.Context) {
+		web.NegotiateData(c, http.StatusOK, gin.H{
+			`at`:       at.Unix(),
+			`platform`: version.Platform,
+			`version`:  version.Version,
+			`commit`:   version.Commit,
+			`date`:     version.Date,
+		})
+	})
 	v1.InitRouter(api)
 }

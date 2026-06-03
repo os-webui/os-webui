@@ -17,6 +17,7 @@ type Config struct {
 
 // WebConfig defines the underlying web service routing
 type WebConfig struct {
+	Title    string            `yaml:"title"`
 	Network  string            `yaml:"network"` // tcp, tcp4, unix
 	Addr     string            `yaml:"addr"`    // listen address
 	TLS      TLSConfig         `yaml:"tls"`
