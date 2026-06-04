@@ -52,7 +52,14 @@ type Context interface {
 
 	// DB compiles or attaches a high-performance transactional embedded B+ tree engine (bbolt) instance.
 	// This yields zero-network-overhead persistence dedicated strictly to the caller plugin's storage space.
+	// Data() + `plugin.db`
 	DB(context.Context) (*bolt.DB, error)
+
+	// 讀取配置，如果 name 是相對路徑，會 加載 filepath.Join(Config(),name)
+	LoadConf(ctx context.Context, name string) ([]byte, error)
+	// 儲存配置，如果 name 是相對路徑，會 儲存到 filepath.Join(Config(),name)
+	// 會先 Save 的 name+`.temp` 再 Rename 到 name 以防止寫入截斷數據
+	SaveConf(ctx context.Context, name string, data []byte) error
 
 	// UI provisions access to the interactive user interface rendering pipeline coupled to the active execution cycle.
 	UI() WebUI
@@ -72,6 +79,14 @@ type Plugin interface {
 	// OnCleanup operates as the terminal lifecycle destructor hook invoked during graceful panel shutdowns
 	// or dynamic plug-and-play hot-unloading sequences to clean volatile allocations and file locks.
 	OnCleanup(ctx Context)
+
+	// 加載配置文件供網頁修改，如果不需要特殊處理通常應該調用 ctx.LoadConf
+	LoadConf(ctx Context, name string) (string, error)
+	// 網頁回調保存配置文件，如果不需要特殊處理通常應該直接調用 ctx.SaveConf
+	SaveConf(ctx Context, name string, data string) error
+
+	// 插件應該重新載入配置文件
+	OnReload(ctx Context) error
 
 	// Features inventories a list of declarative capability blocks exposed by this extension to the host orchestration engine.
 	Features(ctx Context) []Feature

@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -15,7 +16,7 @@ import (
 type Context struct {
 	*contextLow
 	ui             sdk.WebUI
-	ctx            context.Context
+	requestContext context.Context
 	acceptLanguage string
 }
 
@@ -23,8 +24,8 @@ func (c *Context) UI() sdk.WebUI {
 	return c.ui
 }
 func (c *Context) Context() context.Context {
-	if c.ctx == nil {
-		return c.contextLow.ctx
+	if c.requestContext != nil {
+		return c.requestContext
 	}
 	return c.ctx
 }
@@ -85,7 +86,7 @@ func (c *contextLow) Config() string {
 
 func (c *contextLow) DB(ctx context.Context) (*bolt.DB, error) {
 	db, _, err := c.db.Get(ctx, func(ctx context.Context) (*bolt.DB, error) {
-		return bolt.Open(filepath.Join(c.config, `plugin.db`), 0600, &bolt.Options{
+		return bolt.Open(filepath.Join(c.data, `plugin.db`), 0600, &bolt.Options{
 			Timeout: time.Minute,
 		})
 	})
@@ -108,4 +109,44 @@ func (c *contextLow) Delete(key string) {
 	c.rw.Lock()
 	delete(c.keys, key)
 	c.rw.Unlock()
+}
+func (c *contextLow) LoadConf(ctx context.Context, name string) ([]byte, error) {
+	err := ctx.Err()
+	if err != nil {
+		return nil, err
+	}
+	if !filepath.IsAbs(name) {
+		name = filepath.Join(c.config, name)
+	}
+	b, err := os.ReadFile(name)
+	if err != nil {
+		return nil, err
+	}
+	return b, err
+}
+
+func (c *contextLow) SaveConf(ctx context.Context, name string, value []byte) error {
+	err := ctx.Err()
+	if err != nil {
+		return err
+	}
+	if !filepath.IsAbs(name) {
+		name = filepath.Join(c.config, name)
+	}
+	temp := name + `.temp`
+	err = os.WriteFile(temp, value, 0644)
+	if err != nil {
+		return err
+	}
+
+	err = ctx.Err()
+	if err != nil {
+		return err
+	}
+
+	err = os.Rename(temp, name)
+	if err != nil {
+		return err
+	}
+	return nil
 }

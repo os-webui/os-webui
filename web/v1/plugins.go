@@ -2,6 +2,7 @@ package v1
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/os-webui/os-webui/internal/plugins"
@@ -12,7 +13,7 @@ type Plugins struct {
 	web.Web
 }
 
-func (p *Plugins) bindID(c *gin.Context) (string, bool) {
+func (w *Plugins) bindID(c *gin.Context) (string, bool) {
 	var uri struct {
 		ID string `uri:"id" binding:"required"`
 	}
@@ -26,12 +27,24 @@ func (p *Plugins) bindID(c *gin.Context) (string, bool) {
 	}
 	return uri.ID, true
 }
-func (p *Plugins) List(c *gin.Context) {
-	items := plugins.DefaultPluginsManager.List(c.Request.Header.Get(`Accept-Language`))
-	p.NegotiateData(c, http.StatusOK, items)
+func (w *Plugins) bindPlugin(c *gin.Context) (*plugins.Plugin, bool) {
+	id, ok := w.bindID(c)
+	if !ok {
+		return nil, false
+	}
+	plugin := plugins.DefaultPluginsManager.Plugin(id)
+	if plugin == nil {
+		c.String(http.StatusNotFound, `plugin not found`)
+		return nil, false
+	}
+	return plugin, true
 }
-func (p *Plugins) Get(c *gin.Context) {
-	id, ok := p.bindID(c)
+func (w *Plugins) List(c *gin.Context) {
+	items := plugins.DefaultPluginsManager.List(c.Request.Header.Get(`Accept-Language`))
+	w.NegotiateData(c, http.StatusOK, items)
+}
+func (w *Plugins) Get(c *gin.Context) {
+	id, ok := w.bindID(c)
 	if !ok {
 		return
 	}
@@ -71,25 +84,55 @@ func (p *Plugins) Get(c *gin.Context) {
 		}
 	}
 
-	p.NegotiateData(c, http.StatusOK, map[string]any{
+	w.NegotiateData(c, http.StatusOK, map[string]any{
 		`info`:     info,
 		`features`: features,
 	})
 }
-func (p *Plugins) Features(c *gin.Context) {
-	id, ok := p.bindID(c)
+func (w *Plugins) Features(c *gin.Context) {
+	plugin, ok := w.bindPlugin(c)
 	if !ok {
-		return
-	}
-	plugin := plugins.DefaultPluginsManager.Plugin(id)
-	if plugin == nil {
-		c.String(http.StatusNotFound, `plugin not found`)
 		return
 	}
 	items, err := plugin.Features(c.Request.Context(), c.Request.Header.Get(`Accept-Language`))
 	if err == nil {
-		p.NegotiateData(c, http.StatusOK, items)
+		w.NegotiateData(c, http.StatusOK, items)
 	} else {
 		c.String(http.StatusInternalServerError, err.Error())
 	}
+}
+func (w *Plugins) LoadConf(c *gin.Context) {
+	plugin, ok := w.bindPlugin(c)
+	if !ok {
+		return
+	}
+	s, err := plugin.LoadConf(c.Request.Context())
+	if err != nil {
+		if !os.IsNotExist(err) {
+			c.String(http.StatusNotFound, err.Error())
+			return
+		}
+	}
+	w.NegotiateData(c, http.StatusOK, s)
+}
+func (w *Plugins) SaveConf(c *gin.Context) {
+	plugin, ok := w.bindPlugin(c)
+	if !ok {
+		return
+	}
+	var req struct {
+		Data string
+	}
+	err := w.ShouldBind(c, &req)
+	if err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	err = plugin.SaveConf(c.Request.Context(), req.Data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	c.Status(http.StatusOK)
 }

@@ -148,9 +148,45 @@ func (p *Plugin) Metadata() *PluginMeta {
 func (p *Plugin) Startup() error {
 	return p.plugin.OnStartup(p.ctx)
 }
-
 func (p *Plugin) Cleanup() {
 	p.plugin.OnCleanup(p.ctx)
+}
+func (p *Plugin) newContext(requestContext context.Context) (*Context, func()) {
+	done := make(chan struct{})
+	pluginContext := p.ctx.ctx
+	ctx, cancel := context.WithCancelCause(context.Background())
+	go func() {
+		select {
+		case <-pluginContext.Done():
+			cancel(pluginContext.Err())
+		case <-requestContext.Done():
+			cancel(requestContext.Err())
+		case <-done:
+			cancel(context.Canceled)
+		}
+	}()
+	return &Context{
+			contextLow:     p.ctx.contextLow,
+			requestContext: ctx,
+		}, func() {
+			close(done)
+		}
+}
+func (p *Plugin) LoadConf(ctx context.Context) (string, error) {
+	requestContext, done := p.newContext(ctx)
+	defer done()
+	return p.plugin.LoadConf(requestContext, `plugin.txt`)
+}
+func (p *Plugin) SaveConf(ctx context.Context, data string) error {
+	requestContext, done := p.newContext(ctx)
+	defer done()
+	return p.plugin.SaveConf(requestContext, `plugin.txt`, data)
+}
+
+func (p *Plugin) OnReload(ctx context.Context) error {
+	requestContext, done := p.newContext(ctx)
+	defer done()
+	return p.plugin.OnReload(requestContext)
 }
 
 type FeatureInfo struct {
@@ -158,28 +194,16 @@ type FeatureInfo struct {
 	Metadata sdk.M  `json:"metadata,omitempty"`
 }
 
-func (p *Plugin) Features(c context.Context, acceptLanguage string) ([]FeatureInfo, error) {
-	ctx, cancel := context.WithCancelCause(c)
-	defer cancel(context.Canceled)
-	go func() {
-		select {
-		case <-p.ctx.contextLow.ctx.Done():
-			cancel(p.ctx.contextLow.ctx.Err())
-		case <-ctx.Done():
-			cancel(ctx.Err())
-		}
-	}()
+func (p *Plugin) Features(ctx context.Context, acceptLanguage string) ([]FeatureInfo, error) {
+	requestContext, done := p.newContext(ctx)
+	defer done()
+	requestContext.acceptLanguage = acceptLanguage
 
-	newCTX := &Context{
-		contextLow:     p.ctx.contextLow,
-		ctx:            ctx,
-		acceptLanguage: acceptLanguage,
-	}
-	features := p.plugin.Features(newCTX)
+	features := p.plugin.Features(requestContext)
 	items := make([]FeatureInfo, len(features))
 	for i, feature := range features {
 		id := feature.ID()
-		metadata, err := feature.Metadata(newCTX)
+		metadata, err := feature.Metadata(requestContext)
 		if err != nil {
 			return nil, err
 		}
