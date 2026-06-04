@@ -6,9 +6,14 @@ import {
 } from 'naive-ui';
 import { DeleteSweepOutlined, RestartAltOutlined, SaveOutlined } from '@vicons/material'
 import InputTextarea from '@/ui/input/InputTextarea.vue'
+import { useNav } from '../stores/plugin';
 const props = defineProps<Props>()
 const title = useTitle()
 title.set(['main.config', props.data.info.name])
+const nav = useNav()
+nav.setPlugin(props.plugin, props.data.info.name)
+
+
 const { textValue,
   disabled, disabledClear, disabledReset,
   actions } = createConfigView(props)

@@ -10,7 +10,10 @@ export function createPluginPageInit(props: Props) {
   const abort = new AbortController()
   const data = new PageValue(() => DefaultHttpClient.get<PluginFeatures>(`/api/v1/plugins/${props.plugin}`, {
     signal: abort.signal,
-  }).then((resp) => resp.data))
+  }).then((resp) => {
+    resp.data.features.sort((l, r) => l.id.localeCompare(r.id))
+    return resp.data
+  }))
   const loader = ref(new PageLoader([
     data,
   ]))

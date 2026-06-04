@@ -8,6 +8,7 @@ import {
 } from 'naive-ui'
 import {
   HomeOutlined, InfoOutlined, StorefrontOutlined,
+  ExtensionOutlined,
 } from '@vicons/material'
 import { Github } from '@vicons/fa'
 
@@ -21,6 +22,8 @@ import LangMenu from '@/ui/LangMenu.vue'
 
 import { useLocaleStore } from './stores/locale'
 import { useTitle } from './stores/title'
+import { useNav } from './stores/plugin'
+const nav = useNav()
 
 const theme = useThemeStore()
 const breakpoint = useBreakpointStore()
@@ -92,6 +95,21 @@ watchEffect(() => {
                 </template>
                 {{ $t('main.home') }}
               </n-tooltip>
+              <n-tooltip trigger="hover" placement="bottom-start" v-if="nav.pluginId">
+                <template #trigger>
+                  <RouterLink :to="'/plugin/' + encodeURIComponent(nav.pluginId)"
+                    class="flex align-items-center justify-content-center">
+                    <n-button :text="true">
+                      <n-icon size="1.3rem">
+                        <ExtensionOutlined />
+                      </n-icon>
+                    </n-button>
+                  </RouterLink>
+                </template>
+                {{ nav.pluginName }}
+              </n-tooltip>
+
+
             </template>
 
             <!-- menu 在桌面系統顯示到 導航欄左側，手機顯示到導航欄 摺疊部分 -->

@@ -5,7 +5,6 @@ import { useMessage } from "naive-ui"
 import { useI18n } from "vue-i18n"
 import { ResponseType } from "@/internal/core/http_client"
 import { errorString } from "@/internal/core/strings"
-import { Second } from "@own-js-org/time"
 export interface Data {
   info: PluginInfo
   data: string

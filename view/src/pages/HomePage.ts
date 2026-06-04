@@ -8,7 +8,9 @@ export function createHomePage() {
   const abort = new AbortController()
   const plugins = new PageValue(() => DefaultHttpClient.get<PluginInfo[]>('/api/v1/plugins', {
     signal: abort.signal,
-  }).then((resp) => resp.data))
+  }).then((resp) => {
+    return resp.data.sort((l, r) => l.id.localeCompare(r.id))
+  }))
   const loader = ref(new PageLoader([
     plugins,
   ]))

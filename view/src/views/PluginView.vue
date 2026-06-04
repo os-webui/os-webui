@@ -4,10 +4,14 @@ import { createPluginView, type Props } from './PluginView'
 import {
   NCard, NButton, NSpace, NBadge, NDivider
 } from 'naive-ui';
+import { useNav } from '../stores/plugin';
 const offset = [10, -5] as const
 const props = defineProps<Props>()
 const title = useTitle()
 title.set(props.data.info.name)
+const nav = useNav()
+nav.setPlugin(props.plugin, props.data.info.name)
+
 const { disabled, actions } = createPluginView(props)
 
 </script>
