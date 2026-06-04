@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useTitle } from '@/stores/title';
-import { type Props } from './PluginView'
+import { createPluginView, type Props } from './PluginView'
 import {
-  NCard, NTag, NSpace, NBadge, NDivider
+  NCard, NButton, NSpace, NBadge, NDivider
 } from 'naive-ui';
 const offset = [10, -5] as const
 const props = defineProps<Props>()
 const title = useTitle()
-title.set(props.plugin.info.name)
+title.set(props.data.info.name)
+const { disabled, actions } = createPluginView(props)
+
 </script>
 <template>
   <n-card :segmented="{
@@ -15,33 +17,37 @@ title.set(props.plugin.info.name)
     footer: 'soft',
   }">
     <template #header>
-      <n-badge :value="plugin.info.version" type="success" :offset="offset"
-        v-if="plugin.info.version && plugin.info.version !== ''">
-        {{ plugin.info.name }}
+      <n-badge :value="data.info.version" type="success" :offset="offset"
+        v-if="data.info.version && data.info.version !== ''">
+        {{ data.info.name }}
       </n-badge>
       <div v-else>
-        {{ plugin.info.name }}
+        {{ data.info.name }}
       </div>
     </template>
     <template #header-extra>
-      {{ plugin.info.author }}
+      {{ data.info.author }}
     </template>
 
-    {{ plugin.info.description }}
+    {{ data.info.description }}
 
     <template #footer>
-      <n-space>
-        <n-tag v-for="platform in plugin.info.platform" :key="platform">{{ platform }}</n-tag>
+      <n-space justify="end">
+        <n-button :disabled="disabled" @click="actions.config()">{{ $t('main.config') }}</n-button>
+        <n-button :disabled="disabled" @click="actions.reload()">{{ $t('main.reload') }}</n-button>
+        <n-button :disabled="disabled" @click="actions.restart()">{{ $t('main.restart') }}</n-button>
+        <n-button :disabled="disabled" @click="actions.start()">{{ $t('main.start') }}</n-button>
+        <n-button :disabled="disabled" @click="actions.stop()">{{ $t('main.stop') }}</n-button>
       </n-space>
     </template>
   </n-card>
 
 
-  <div v-if="plugin.features && plugin.features.length">
+  <div v-if="data.features && data.features.length">
     <n-divider />
     <div class="grid">
-      <div v-for="item in plugin.features" :key="item.id" class="xl:col-3 lg:col-4 md:col-6 col-12">
-        <RouterLink :to="`/plugin/${encodeURIComponent(plugin.info.id)}/${encodeURIComponent(item.id)}`"
+      <div v-for="item in data.features" :key="item.id" class="xl:col-3 lg:col-4 md:col-6 col-12">
+        <RouterLink :to="`/plugin/${encodeURIComponent(data.info.id)}/${encodeURIComponent(item.id)}`"
           class="plain-link">
           <n-card :segmented="{
             content: true,

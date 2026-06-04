@@ -1,16 +1,22 @@
 import { DefaultHttpClient } from "@/internal/api"
 import { PageLoader, PageValue } from "@/internal/core/loader"
 import type { PluginInfo } from "@/views/HomeView";
+
 import { ref, onUnmounted, onMounted } from 'vue';
+export interface Props {
+  plugin: string
+}
 
-
-export function createHomePage() {
+export function createConfigPageInit(props: Props) {
   const abort = new AbortController()
-  const plugins = new PageValue(() => DefaultHttpClient.get<PluginInfo[]>('/api/v1/plugins', {
+  const data = new PageValue(() => DefaultHttpClient.get<{
+    info: PluginInfo
+    data: string
+  }>(`/api/v1/plugins/${encodeURIComponent(props.plugin)}/config`, {
     signal: abort.signal,
   }).then((resp) => resp.data))
   const loader = ref(new PageLoader([
-    plugins,
+    data,
   ]))
 
   onMounted(() => {
@@ -22,6 +28,6 @@ export function createHomePage() {
   return {
     signal: abort.signal,
     loader: loader,
-    plugins: plugins,
+    data: data,
   }
 }

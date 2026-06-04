@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import InitPage from '@/components/InitPage.vue'
 import PluginView from '@/views/PluginView.vue'
-import { createPluginPage } from './PluginPage';
-interface Props {
-  plugin: string
-}
+import { createPluginPageInit, type Props } from './PluginPageInit';
 const props = defineProps<Props>()
-const page = createPluginPage(props.plugin)
-
+const { signal, loader, data } = createPluginPageInit(props)
 </script>
 <template>
-  <InitPage :loader="page.loader.value">
+  <InitPage :loader="loader">
     <template #ok>
-      <PluginView :abort="page.abort.signal" :plugin="page.plugin.value!" />
+      <PluginView :signal="signal" :data="data.value!" :plugin="plugin"/>
     </template>
   </InitPage>
 </template>

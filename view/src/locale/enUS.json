@@ -10,6 +10,11 @@
         "auto": "System Lang"
     },
     "main": {
+        "config": "Configuration",
+        "reload": "Reload",
+        "restart": "Restart",
+        "start": "Startup",
+        "stop": "Stop",
         "notFound": "Not Found",
         "404": "404 Not Found",
         "about": "About",
@@ -19,6 +24,11 @@
         "store": "Plugins Store",
         "plugin": "Plugin",
         "feature": "Feature"
+    },
+    "ui": {
+        "clear": "clear",
+        "reset": "reset",
+        "save": "save"
     },
     "plugins": {
         "emby": "No plugins available",

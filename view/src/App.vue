@@ -48,21 +48,24 @@ onUnmounted(() => {
 const title = useTitle()
 useRouter().beforeEach((to) => {
   const pageTitle = to.meta.title
-  title.set(typeof pageTitle === "string" ? pageTitle : '')
+  title.set(typeof pageTitle === "string" || Array.isArray(pageTitle) ? pageTitle : [])
 })
 watchEffect(() => {
   title.updateTitle()
-  const val = title.get
   const main = title.title
-  if (val === '') {
+  let get = false
+  const strs: string[] = title.get.map((v) => {
+    if (v.startsWith('main.')) {
+      get = true
+      return i18n.t(v)
+    }
+    return v
+  })
+  if (!get) {
     i18n.t('main.home')
-    document.title = main
-  } else if (val.startsWith('main.')) {
-    document.title = i18n.t(`${val}`) + ' - ' + main
-  } else {
-    i18n.t('main.home')
-    document.title = `${val} - ${main}`
   }
+  strs.push(main)
+  document.title = strs.join(' - ')
 })
 </script>
 

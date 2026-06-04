@@ -22,7 +22,7 @@ func createPluginDir(tag, path string, slog *slog.Logger) (string, error) {
 		return ``, err
 	}
 	slog.Info(`plugin `+tag+` dir`, `dir`, dir)
-	err = os.MkdirAll(dir, 0644)
+	err = os.MkdirAll(dir, 0755)
 	if err != nil {
 		slog.Error(`failed to mkdir plugin `+tag+` dir`, `dir`, dir)
 		return ``, err

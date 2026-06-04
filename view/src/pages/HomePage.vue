@@ -2,13 +2,13 @@
 import InitPage from '@/components/InitPage.vue'
 import HomeView from '@/views/HomeView.vue'
 import { createHomePage } from './HomePage';
-const page = createHomePage()
+const { signal, loader, plugins } = createHomePage()
 </script>
 <template>
-  <InitPage :loader="page.loader.value">
+  <InitPage :loader="loader">
     <template #ok>
-      <HomeView :abort="page.abort.signal" :items="page.plugins.value" />
-      <!-- <HomeView :abort="page.abort.signal" :items="[]" /> -->
+      <HomeView :signal="signal" :items="plugins.value" />
+      <!-- <HomeView :signal="page.abort.signal" :items="[]" /> -->
 
     </template>
   </InitPage>

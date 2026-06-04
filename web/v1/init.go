@@ -12,8 +12,8 @@ func InitRouter(api *gin.RouterGroup) {
 	var plugins Plugins
 	router := v1.Group(`plugins`)
 	router.GET(``, plugins.List)
-	router.GET(`:id/conf`, plugins.LoadConf)
-	router.POST(`:id/conf`, plugins.SaveConf)
+	router.GET(`:id/config`, plugins.LoadConfig)
+	router.POST(`:id/config`, plugins.SaveConfig)
 	router.GET(`:id`, plugins.Get)
 	router.GET(`:id/features`, plugins.Features)
 	router.GET(`:id/run`, notImplemented)

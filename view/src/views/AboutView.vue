@@ -1,3 +1,4 @@
+<script setup lang="ts"></script>
 <template>
   <div class="about">
     <h1 style="height:1024px">This is an about page</h1>

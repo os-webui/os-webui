@@ -10,6 +10,11 @@
         "auto": "系统语言"
     },
     "main": {
+        "config": "配置",
+        "reload": "重载",
+        "restart": "重启",
+        "start": "启动",
+        "stop": "停止",
         "notFound": "未找到",
         "404": "404 未找到页面",
         "about": "关于",
@@ -19,6 +24,11 @@
         "store": "插件商店",
         "plugin": "插件",
         "feature": "特性"
+    },
+    "ui": {
+        "clear": "清空",
+        "reset": "重置",
+        "save": "保存"
     },
     "plugins": {
         "emby": "没有可用插件",

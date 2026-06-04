@@ -1,12 +1,12 @@
 import { DefaultHttpClient } from '@/internal/api'
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef, type ShallowRef } from 'vue'
 
 export const useTitle = defineStore('title', () => {
-  const value = ref('')
+  const value :ShallowRef<string[]>= shallowRef([])
   const get = computed(() => value.value)
-  const set = (val: string) => {
-    value.value = val
+  const set = (val: string | string[]) => {
+    value.value = typeof val === 'string' ? [val] : val
   }
   const title = ref('OS WebUI')
   let fetch = false

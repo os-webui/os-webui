@@ -110,7 +110,7 @@ func (c *contextLow) Delete(key string) {
 	delete(c.keys, key)
 	c.rw.Unlock()
 }
-func (c *contextLow) LoadConf(ctx context.Context, name string) ([]byte, error) {
+func (c *contextLow) LoadConfig(ctx context.Context, name string) ([]byte, error) {
 	err := ctx.Err()
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (c *contextLow) LoadConf(ctx context.Context, name string) ([]byte, error) 
 	return b, err
 }
 
-func (c *contextLow) SaveConf(ctx context.Context, name string, value []byte) error {
+func (c *contextLow) SaveConfig(ctx context.Context, name string, value []byte) error {
 	err := ctx.Err()
 	if err != nil {
 		return err

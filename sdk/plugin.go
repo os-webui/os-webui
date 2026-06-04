@@ -56,10 +56,10 @@ type Context interface {
 	DB(context.Context) (*bolt.DB, error)
 
 	// 讀取配置，如果 name 是相對路徑，會 加載 filepath.Join(Config(),name)
-	LoadConf(ctx context.Context, name string) ([]byte, error)
+	LoadConfig(ctx context.Context, name string) ([]byte, error)
 	// 儲存配置，如果 name 是相對路徑，會 儲存到 filepath.Join(Config(),name)
 	// 會先 Save 的 name+`.temp` 再 Rename 到 name 以防止寫入截斷數據
-	SaveConf(ctx context.Context, name string, data []byte) error
+	SaveConfig(ctx context.Context, name string, data []byte) error
 
 	// UI provisions access to the interactive user interface rendering pipeline coupled to the active execution cycle.
 	UI() WebUI
@@ -81,9 +81,9 @@ type Plugin interface {
 	OnCleanup(ctx Context)
 
 	// 加載配置文件供網頁修改，如果不需要特殊處理通常應該調用 ctx.LoadConf
-	LoadConf(ctx Context, name string) (string, error)
+	LoadConfig(ctx Context, name string) (string, error)
 	// 網頁回調保存配置文件，如果不需要特殊處理通常應該直接調用 ctx.SaveConf
-	SaveConf(ctx Context, name string, data string) error
+	SaveConfig(ctx Context, name string, data string) error
 
 	// 插件應該重新載入配置文件
 	OnReload(ctx Context) error
@@ -104,47 +104,3 @@ type Feature interface {
 	Run(ctx Context) (err error)
 }
 type M map[string]any
-
-// type Metadata struct {
-// 	Name        string `json:"name,omitempty"`
-// 	Description string `json:"description,omitempty"`
-// 	Input       UI     `json:"input,omitempty"`
-// 	Output      UI     `json:"output,omitempty"`
-// }
-
-// type UIOption struct {
-// 	Label string `json:"label,omitempty"`
-// 	Value any    `json:"value,omitempty"`
-// }
-// type UI struct {
-// 	ID string `json:"id,omitempty"`
-
-// 	Tag string `json:"tag,omitempty"`
-
-// 	Label string `json:"label,omitempty"`
-
-// 	Tooltip string `json:"tooltip,omitempty"`
-// 	Text string `json:"text,omitempty"`
-
-// 	Value any `json:"value,omitempty"`
-
-// 	Options []UIOption `json:"options,omitempty"`
-
-// 	// primeflex class see: https://primeflex.org/
-// 	Class string `json:"class,omitempty"`
-
-// 	Flags map[string]any `json:"flags,omitempty"`
-
-// 	Children []UI `json:"children,omitempty"`
-// }
-
-// const (
-// 	TagDiv  = `div`
-// 	TagP    = `p`
-// 	TagSpan = `span`
-// 	TagBR   = `br`
-// 	TagPre  = `pre`
-
-// 	TagButton = `button`
-// 	TagSelect = `Select`
-// )

@@ -39,6 +39,18 @@ func (w *Plugins) bindPlugin(c *gin.Context) (*plugins.Plugin, bool) {
 	}
 	return plugin, true
 }
+func (w *Plugins) bindPluginInfo(c *gin.Context) (*plugins.Plugin, plugins.PluginInfo, bool) {
+	id, ok := w.bindID(c)
+	if !ok {
+		return nil, plugins.PluginInfo{}, false
+	}
+	plugin, info, ok := plugins.DefaultPluginsManager.Get(id, c.Request.Header.Get(`Accept-Language`))
+	if !ok {
+		c.String(http.StatusNotFound, `plugin not found`)
+		return nil, plugins.PluginInfo{}, false
+	}
+	return plugin, info, true
+}
 func (w *Plugins) List(c *gin.Context) {
 	items := plugins.DefaultPluginsManager.List(c.Request.Header.Get(`Accept-Language`))
 	w.NegotiateData(c, http.StatusOK, items)
@@ -101,21 +113,25 @@ func (w *Plugins) Features(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 	}
 }
-func (w *Plugins) LoadConf(c *gin.Context) {
-	plugin, ok := w.bindPlugin(c)
+func (w *Plugins) LoadConfig(c *gin.Context) {
+	plugin, info, ok := w.bindPluginInfo(c)
 	if !ok {
 		return
 	}
-	s, err := plugin.LoadConf(c.Request.Context())
+
+	s, err := plugin.LoadConfig(c.Request.Context())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			c.String(http.StatusNotFound, err.Error())
 			return
 		}
 	}
-	w.NegotiateData(c, http.StatusOK, s)
+	w.NegotiateData(c, http.StatusOK, gin.H{
+		`info`: info,
+		`data`: s,
+	})
 }
-func (w *Plugins) SaveConf(c *gin.Context) {
+func (w *Plugins) SaveConfig(c *gin.Context) {
 	plugin, ok := w.bindPlugin(c)
 	if !ok {
 		return
@@ -129,7 +145,7 @@ func (w *Plugins) SaveConf(c *gin.Context) {
 		return
 	}
 
-	err = plugin.SaveConf(c.Request.Context(), req.Data)
+	err = plugin.SaveConfig(c.Request.Context(), req.Data)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return

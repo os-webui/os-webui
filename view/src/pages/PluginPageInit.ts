@@ -2,15 +2,17 @@ import { DefaultHttpClient } from "@/internal/api"
 import { PageLoader, PageValue } from "@/internal/core/loader"
 import type { PluginFeatures } from "@/views/PluginView";
 import { ref, onUnmounted, onMounted } from 'vue';
+export interface Props {
+  plugin: string
+}
 
-
-export function createPluginPage(id: string) {
+export function createPluginPageInit(props: Props) {
   const abort = new AbortController()
-  const plugin = new PageValue(() => DefaultHttpClient.get<PluginFeatures>(`/api/v1/plugins/${id}`, {
+  const data = new PageValue(() => DefaultHttpClient.get<PluginFeatures>(`/api/v1/plugins/${props.plugin}`, {
     signal: abort.signal,
   }).then((resp) => resp.data))
   const loader = ref(new PageLoader([
-    plugin,
+    data,
   ]))
 
   onMounted(() => {
@@ -20,8 +22,8 @@ export function createPluginPage(id: string) {
     abort.abort('page close')
   })
   return {
-    abort: abort,
+    signal: abort.signal,
     loader: loader,
-    plugin: plugin,
+    data: data,
   }
 }

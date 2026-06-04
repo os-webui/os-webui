@@ -172,15 +172,15 @@ func (p *Plugin) newContext(requestContext context.Context) (*Context, func()) {
 			close(done)
 		}
 }
-func (p *Plugin) LoadConf(ctx context.Context) (string, error) {
+func (p *Plugin) LoadConfig(ctx context.Context) (string, error) {
 	requestContext, done := p.newContext(ctx)
 	defer done()
-	return p.plugin.LoadConf(requestContext, `plugin.txt`)
+	return p.plugin.LoadConfig(requestContext, `plugin.txt`)
 }
-func (p *Plugin) SaveConf(ctx context.Context, data string) error {
+func (p *Plugin) SaveConfig(ctx context.Context, data string) error {
 	requestContext, done := p.newContext(ctx)
 	defer done()
-	return p.plugin.SaveConf(requestContext, `plugin.txt`, data)
+	return p.plugin.SaveConfig(requestContext, `plugin.txt`, data)
 }
 
 func (p *Plugin) OnReload(ctx context.Context) error {

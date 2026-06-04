@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import PluginPageInit from './PluginPageInit.vue'
+import ConfigPageInit from './ConfigPageInit.vue'
 import { useRoute } from 'vue-router';
 const route = useRoute()
 const id = computed(() => `${route.params.id}`)
 </script>
 <template>
-  <PluginPageInit :key="id" :plugin="id" />
+  <ConfigPageInit :key="id" :plugin="id" />
 </template>
 <style scoped></style>

@@ -8,5 +8,5 @@ export interface PluginInfo {
 }
 export interface Props {
   items?: PluginInfo[]
-  abort: AbortSignal
+  signal: AbortSignal
 }
