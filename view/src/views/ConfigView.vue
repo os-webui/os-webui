@@ -2,7 +2,7 @@
 import { useTitle } from '@/stores/title';
 import { createConfigView, type Props } from './ConfigView'
 import {
-  NInput, NCard, NButton, NSpace
+  NInput, NCard, NButton, NSpace, NFormItem
 } from 'naive-ui';
 const props = defineProps<Props>()
 const title = useTitle()
@@ -11,12 +11,16 @@ const { textValue, handleKeyDown,
   disabled, disabledClear, disabledReset,
   actions } = createConfigView(props)
 const autosize = { minRows: 3, maxRows: 5 }
+const config = `$ConfigDir/${props.plugin}/plugin.txt`
 </script>
 <template>
   <n-card :title="$t('main.config') + ' - ' + props.data.info.name" :bordered="false">
-    <n-input type="textarea" v-model:value="textValue" @keydown="handleKeyDown" placeholder="" :disabled="disabled"
-      :autosize="autosize" autofocus show-count autocapitalize="off" autocomplete="off" autocorrect="off"
-      spellcheck="false" />
+    <n-form-item :label="config">
+      <n-input type="textarea" v-model:value="textValue" @keydown="handleKeyDown"
+        :placeholder="$t('ui.configPlaceholder')" :disabled="disabled" :autosize="autosize"
+        :input-props="{ style: { whiteSpace: 'pre', overflowX: 'auto' } }" autofocus show-count autocapitalize="off"
+        autocomplete="off" autocorrect="off" spellcheck="false" />
+    </n-form-item>
 
     <template #footer>
       <n-space justify="end">
@@ -30,6 +34,7 @@ const autosize = { minRows: 3, maxRows: 5 }
 </template>
 
 <style scoped>
+.n-form-item,
 .n-input {
   height: 100%;
 }

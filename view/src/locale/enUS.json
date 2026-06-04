@@ -26,9 +26,10 @@
         "feature": "Feature"
     },
     "ui": {
-        "clear": "clear",
-        "reset": "reset",
-        "save": "save"
+        "clear": "Clear",
+        "reset": "Reset",
+        "save": "Save",
+        "configPlaceholder": "Please enter plugin configuration"
     },
     "plugins": {
         "emby": "No plugins available",
