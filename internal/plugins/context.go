@@ -47,6 +47,18 @@ type contextLow struct {
 }
 
 func newContext(log *slog.Logger, install, config, data, id, version string) (*contextLow, error) {
+	config = filepath.Join(config, id)
+	data = filepath.Join(data, id)
+
+	err := os.MkdirAll(config, 0755)
+	if err != nil {
+		return nil, err
+	}
+	err = os.MkdirAll(data, 0755)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	return &contextLow{
 		ctx:        ctx,
@@ -55,8 +67,8 @@ func newContext(log *slog.Logger, install, config, data, id, version string) (*c
 		log: log,
 
 		install: filepath.Join(install, id),
-		config:  filepath.Join(config, id),
-		data:    filepath.Join(data, id),
+		config:  config,
+		data:    data,
 
 		id:      id,
 		version: version,
@@ -85,6 +97,11 @@ func (c *contextLow) Config() string {
 }
 
 func (c *contextLow) DB(ctx context.Context) (*bolt.DB, error) {
+	err := ctx.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	db, _, err := c.db.Get(ctx, func(ctx context.Context) (*bolt.DB, error) {
 		return bolt.Open(filepath.Join(c.data, `plugin.db`), 0600, &bolt.Options{
 			Timeout: time.Minute,

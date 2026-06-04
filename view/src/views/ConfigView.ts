@@ -1,6 +1,7 @@
 import { computed, ref } from "vue"
 import type { PluginInfo } from "./HomeView"
 import type { Save20Regular } from "@vicons/fluent"
+import { DefaultHttpClient } from "@/internal/api"
 export interface Data {
   info: PluginInfo
   data: string
@@ -11,6 +12,7 @@ export interface Props {
   data: Data
 }
 export function createConfigView(props: Props) {
+  const originValue = ref(props.data.data)
   const textValue = ref(props.data.data)
   const handleKeyDown = (event: KeyboardEvent): void => {
     const textarea = event.target as HTMLTextAreaElement;
@@ -74,7 +76,7 @@ export function createConfigView(props: Props) {
   }
   const disabled = ref(false)
   const disabledClear = computed(() => disabled.value || textValue.value === '')
-  const disabledReset = computed(() => disabled.value || textValue.value === props.data.data)
+  const disabledReset = computed(() => disabled.value || textValue.value === originValue.value)
   return {
     textValue,
     handleKeyDown,
@@ -90,13 +92,27 @@ export function createConfigView(props: Props) {
         if (disabled.value) {
           return
         }
-        textValue.value = props.data.data
+        textValue.value = originValue.value
       },
-      save() {
+      async save() {
         if (disabled.value) {
           return
         }
-        console.log('save')
+        disabled.value = true
+        const value = textValue.value
+        try {
+          await DefaultHttpClient.post(`/api/v1/plugins/${encodeURIComponent(props.plugin)}/config`, {
+            body: JSON.stringify({
+              data: value,
+            }),
+            signal: props.signal,
+          })
+          originValue.value = value
+        } catch (e) {
+          console.log(e)
+        } finally {
+          disabled.value = false
+        }
       },
     },
   }
