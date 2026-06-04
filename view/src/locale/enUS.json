@@ -26,6 +26,10 @@
         "feature": "Feature"
     },
     "ui": {
+        "clearConfirm": "Please confirm whether you want to clear the data!",
+        "resetConfirm": "Please confirm whether you want to reset the data!",
+        "saveConfirm": "Please confirm whether you want to save the data!",
+        "saveSuccess": "Data saved successfully",
         "clear": "Clear",
         "reset": "Reset",
         "save": "Save",

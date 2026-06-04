@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import InitPage from '@/components/InitPage.vue'
+import InitPage from '@/ui/InitPage.vue'
 import HomeView from '@/views/HomeView.vue'
 import { createHomePage } from './HomePage';
 const { signal, loader, plugins } = createHomePage()

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { type IPageLoader, PageStatus } from '@/internal/core/loader';
+import { errorString } from '@/internal/core/strings';
 import {
   NSpin, NResult, NButton,
 } from 'naive-ui'
@@ -7,13 +8,7 @@ import { computed } from 'vue';
 const props = defineProps<{
   loader?: IPageLoader
 }>()
-
-const err = computed(() => {
-  const error = props.loader?.error
-  return error instanceof Error
-    ? error.message
-    : String(error);
-})
+const err = computed(() => errorString(props.loader?.error))
 </script>
 <template>
   <div class="view">

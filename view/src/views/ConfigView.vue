@@ -2,8 +2,9 @@
 import { useTitle } from '@/stores/title';
 import { createConfigView, type Props } from './ConfigView'
 import {
-  NCard, NButton, NSpace, NFormItem
+  NCard, NButton, NSpace, NFormItem, NPopconfirm, NIcon
 } from 'naive-ui';
+import { DeleteSweepOutlined, RestartAltOutlined, SaveOutlined } from '@vicons/material'
 import InputTextarea from '@/ui/input/InputTextarea.vue'
 const props = defineProps<Props>()
 const title = useTitle()
@@ -22,9 +23,43 @@ const config = `$ConfigDir/${props.plugin}/plugin.txt`
 
     <template #footer>
       <n-space justify="end">
-        <n-button :disabled="disabledClear" @click="actions.clear()">{{ $t('ui.clear') }}</n-button>
-        <n-button :disabled="disabledReset" @click="actions.reset()">{{ $t('ui.reset') }}</n-button>
-        <n-button :disabled="disabledReset" @click="actions.save()">{{ $t('ui.save') }}</n-button>
+        <n-popconfirm @positive-click="actions.clear()">
+          <template #trigger>
+            <n-button :disabled="disabledClear">
+              <template #icon>
+                <NIcon>
+                  <DeleteSweepOutlined />
+                </NIcon>
+              </template>
+              {{ $t('ui.clear') }}</n-button>
+          </template>
+          {{ $t('ui.clearConfirm') }}
+        </n-popconfirm>
+        <n-popconfirm @positive-click="actions.reset()">
+          <template #trigger>
+            <n-button :disabled="disabledReset">
+              <template #icon>
+                <NIcon>
+                  <RestartAltOutlined />
+                </NIcon>
+              </template>
+              {{ $t('ui.reset') }}</n-button>
+          </template>
+          {{ $t('ui.resetConfirm') }}
+        </n-popconfirm>
+
+        <n-popconfirm @positive-click="actions.save()">
+          <template #trigger>
+            <n-button :disabled="disabledReset">
+              <template #icon>
+                <NIcon>
+                  <SaveOutlined />
+                </NIcon>
+              </template>
+              {{ $t('ui.save') }}</n-button>
+          </template>
+          {{ $t('ui.saveConfirm') }}
+        </n-popconfirm>
       </n-space>
     </template>
   </n-card>

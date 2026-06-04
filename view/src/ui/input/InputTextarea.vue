@@ -1,77 +1,104 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script setup lang="ts">
-import {
-  NInput,
-} from 'naive-ui';
+import { NInput } from 'naive-ui';
 import { onMounted, ref, computed, onBeforeUnmount } from 'vue';
+
 interface Props {
-  readonly?: boolean
-  value?: string
-  autosize?: any
-  disabled?: boolean
+  readonly?: boolean;
+  value?: string;
+  autosize?: any;
+  disabled?: boolean;
 }
-const props = defineProps<Props>()
+
+const props = defineProps<Props>();
+
+// Calculate total lines based on newline characters to drive line numbers
+// 透過換行符號計算總行數以驅動行號顯示
 const totalLines = computed<number>(() => {
   if (!props.value) {
-    return 1
+    return 1;
   }
   return props.value.split('\n').length || 1;
-})
-const lineNumbersRef = ref<HTMLDivElement | null>(null)
+});
+
+const lineNumbersRef = ref<HTMLDivElement | null>(null);
+const isFocused = ref<boolean>(false); // Controls the Naive UI outer focus ring state / 控制外框呼吸燈的狀態變數
+
+// Synchronize the vertical scroll position of line numbers with the textarea
+// 讓左側行號的垂直捲動位置與右側文字框完全同步
 const handleScroll = (event: Event): void => {
-  const target = event.target as HTMLTextAreaElement
+  const target = event.target as HTMLTextAreaElement;
   if (lineNumbersRef.value) {
-    lineNumbersRef.value.scrollTop = target.scrollTop
+    lineNumbersRef.value.scrollTop = target.scrollTop;
   }
-}
-const editorWrapperRef = ref<HTMLDivElement | null>(null)
-let scrollTarget: HTMLElement | null = null
-let quit = false
+};
+
+const editorWrapperRef = ref<HTMLDivElement | null>(null);
+let scrollTarget: HTMLElement | null = null;
+let quit = false;
+
 onMounted(() => {
+  // Use a slight delay to ensure Naive UI has fully rendered the internal textarea element
+  // 使用微小的延遲，確保 Naive UI 已經完全渲染出內部的 textarea 元素
   setTimeout(() => {
     if (editorWrapperRef.value && !quit) {
-      scrollTarget = editorWrapperRef.value.querySelector('textarea')
+      scrollTarget = editorWrapperRef.value.querySelector('textarea');
       if (scrollTarget) {
-        scrollTarget.addEventListener('scroll', handleScroll)
+        scrollTarget.addEventListener('scroll', handleScroll);
       }
     }
-  }, 100)
-})
+  }, 100);
+});
+
 onBeforeUnmount(() => {
-  quit = true
+  quit = true;
   if (scrollTarget) {
-    scrollTarget.removeEventListener('scroll', handleScroll)
+    scrollTarget.removeEventListener('scroll', handleScroll);
   }
-})
+});
+
+const emit = defineEmits<{
+  'update:value': [value: string];
+}>();
+
+function handleUpdateValue(value: string) {
+  // block input if it is read-only or disabled pseudo-readonly
+  // 如果是唯讀或禁用的偽唯讀狀態，則攔截更新
+  if (!props.readonly && !props.disabled) {
+    emit('update:value', value);
+  }
+}
+
 const handleKeyDown = (event: KeyboardEvent): void => {
+  // If disabled, block all shortcut actions immediately
+  // 如果是禁用狀態，立刻攔截所有快捷鍵動作
+  if (props.disabled) return;
+
   const textarea = event.target as HTMLTextAreaElement;
   const { selectionStart, selectionEnd } = textarea;
   const currentText = props.value ?? '';
 
-  // Helper function to safely execute text insertion while keeping Ctrl+Z history
   const insertTextWithHistory = (startPos: number, endPos: number, text: string, newCursorPos: number) => {
     textarea.focus();
-    // 1. Highlight the target text area to be replaced
     textarea.setSelectionRange(startPos, endPos);
 
-    // 2. Use browser command to insert text (this preserves Ctrl+Z)
     const success = document.execCommand('insertText', false, text);
 
-    // 3. Fallback to manual string manipulation if execCommand fails
     if (!success) {
       handleUpdateValue(
         currentText.substring(0, startPos) +
         text +
-        currentText.substring(endPos));
+        currentText.substring(endPos)
+      );
     }
 
-    // 4. Update cursor position precisely
     setTimeout(() => {
       textarea.selectionStart = textarea.selectionEnd = newCursorPos;
     }, 0);
   };
 
   // --- 1. Shift + Tab: Insert Indentation ---
+  // --- 1. Shift + Tab: 插入縮排 ---
   if (event.key === 'Tab' && event.shiftKey) {
     event.preventDefault();
     const tabCharacter = '\t';
@@ -80,52 +107,42 @@ const handleKeyDown = (event: KeyboardEvent): void => {
   }
 
   // --- 2. Ctrl + Enter: Insert New Line BELOW Current Line ---
+  // --- 2. Ctrl + Enter: 在當前行下方插入新行 ---
   if (event.key === 'Enter' && event.ctrlKey && !event.shiftKey) {
     event.preventDefault();
-
     const nextLineBreak = currentText.indexOf('\n', selectionStart);
     const insertPos = nextLineBreak === -1 ? currentText.length : nextLineBreak;
-
-    // We insert "\n" at the end of current line, and move cursor to next line (insertPos + 1)
     insertTextWithHistory(insertPos, insertPos, '\n', insertPos + 1);
     return;
   }
 
   // --- 3. Shift + Enter: Insert New Line ABOVE Current Line ---
+  // --- 3. Shift + Enter: 在當前行上方插入新行 ---
   if (event.key === 'Enter' && event.shiftKey && !event.ctrlKey) {
     event.preventDefault();
-
     const prevLineBreak = currentText.lastIndexOf('\n', selectionStart - 1);
     const insertPos = prevLineBreak === -1 ? 0 : prevLineBreak + 1;
-
-    // We insert "\n" at the start of current line, and move cursor to the newly created line (insertPos)
     insertTextWithHistory(insertPos, insertPos, '\n', insertPos);
     return;
   }
-}
-const emit = defineEmits<{
-  'update:value': [value: string]
-}>()
-function handleUpdateValue(value: string) {
-  if (!props.readonly) {
-    emit('update:value', value)
-  }
-}
+};
 </script>
+
 <template>
-  <div ref="editorWrapperRef" class="code-editor-container">
+  <div ref="editorWrapperRef" class="code-editor-container"
+    :class="{ 'is-focused': isFocused, 'is-disabled': disabled }">
     <div ref="lineNumbersRef" class="line-numbers">
       <div v-for="line in totalLines" :key="line" class="line-number-item">
         {{ line }}
       </div>
     </div>
+
     <n-input type="textarea" :value="value" @update:value="handleUpdateValue" @keydown="handleKeyDown"
-      :placeholder="$t('ui.configPlaceholder')" :disabled="disabled" :autosize="autosize"
+      @focus="isFocused = true" @blur="isFocused = false" :placeholder="$t('ui.configPlaceholder')" :disabled="false"
+      :readonly="readonly || disabled" :autosize="autosize"
       :input-props="{ style: { whiteSpace: 'pre', overflowX: 'auto' } }" autofocus show-count autocapitalize="off"
-      :readonly="readonly" autocomplete="off" autocorrect="off" spellcheck="false" />
+      autocomplete="off" autocorrect="off" spellcheck="false" />
   </div>
-
-
 </template>
 
 <style scoped>
@@ -136,54 +153,81 @@ function handleUpdateValue(value: string) {
 .code-editor-container {
   width: 100%;
 
+  /* Variables for precise alignment between text and line numbers */
+  /* 文字與行號精密對齊專用的尺寸變數 */
   --editor-font-family: 'Fira Code', Consolas, Monaco, 'Courier New', Courier, monospace;
   --editor-font-size: 14px;
   --editor-line-height: 1.5;
   --editor-padding-top: 8px;
   --editor-padding-bottom: 8px;
 
-  /* =============================================================
-     核心修正：直接劫持並讀取 Naive UI 當前主題注入的 CSS 變數
-     不論你在父層綁定的是亮色還是深色物件，這些變數的值都會被 Naive UI 自動更新
-     ============================================================= */
+  /* Automatically inherit CSS variables injected by Naive UI's current theme */
+  /* 自動繼承 Naive UI 當前主題注入的 CSS 變數環境 */
   background-color: var(--n-color);
-  /* 讀取當前主題的輸入框背景色 */
   border: 1px solid var(--n-border-color);
-  /* 讀取當前主題的邊框顏色 */
 
-  /* 行號區域的配色自動化調校 */
-  /* 利用與主背景色微弱的混合，自動生成不論亮暗色都完美的行號背景 */
+  /* Compute dynamic styling for line numbers based on theme context */
+  /* 根據主題內文自動調配行號區域的背景與文字色 */
   --line-number-bg: var(--n-code-bg-color, rgba(0, 0, 0, 0.03));
   --line-number-color: var(--n-placeholder-color);
-  /* 讀取當前主題的提示文字顏色作為行號色 */
 
   display: flex !important;
   border-radius: 3px;
   overflow: hidden;
   box-sizing: border-box;
 
-  /* 呼吸燈動畫過渡，時間比照 Naive UI 官方規範 */
+  /* Replicate standard Naive UI transition curves */
+  /* 複製標準的 Naive UI 漸變動畫曲線 */
   transition: border-color 0.2s var(--n-cubic-bezier-ease-in-out),
     box-shadow 0.2s var(--n-cubic-bezier-ease-in-out),
     background-color 0.3s var(--n-cubic-bezier-ease-in-out);
 }
 
-/* =============================================================
-   狀態控制：完全同步 Naive UI 官方的 Hover 與 Focus 呼吸燈效果
-   ============================================================= */
-
-/* Hover 狀態 */
-.code-editor-container:hover {
+/* Hover effect (Only apply when not pseudo-disabled) */
+/* 懸停狀態 (僅在非禁用狀態下啟用) */
+.code-editor-container:not(.is-disabled):hover {
   border-color: var(--n-border-color-hover);
 }
 
-/* Focus 狀態（當你在外層 div 加上 :class="{ 'is-focused': isFocused }" 時觸發） */
-.code-editor-container.is-focused {
+/* Focus glow effect (Only apply when not pseudo-disabled) */
+/* 聚焦發光狀態 (僅在非禁用狀態下啟用) */
+.code-editor-container.is-focused:not(.is-disabled) {
   border-color: var(--n-border-color-hover);
   box-shadow: var(--n-box-shadow-focus);
 }
 
-/* 移除 Naive UI 內建的二次重複邊框 */
+/* 🎨 SPECIAL CSS FOR PSEUDO-DISABLED STATE */
+/* 🎨 核心修改：針對偽裝禁用狀態（is-disabled）的專屬特殊 CSS */
+.code-editor-container.is-disabled {
+  background-color: var(--n-color-disabled) !important;
+  border-color: var(--n-border-color) !important;
+  /* Lock the border without glow / 鎖定原始邊框顏色不發光 */
+  box-shadow: none !important;
+}
+
+/* Change cursor behavior for the entire container and inner elements */
+/* 變更整個容器及其內部所有元素的滑鼠游標為不允許狀態 */
+.code-editor-container.is-disabled,
+.code-editor-container.is-disabled .line-numbers,
+.code-editor-container.is-disabled :deep(.n-input),
+.code-editor-container.is-disabled :deep(.n-input .n-input__textarea-el) {
+  cursor: not-allowed !important;
+}
+
+/* Force dim the text and line numbers colors using Naive UI's native disabled token */
+/* 使用 Naive UI 原生的禁用文字變數，強行將行號與內文顏色調暗 */
+.code-editor-container.is-disabled .line-numbers {
+  background-color: var(--n-color-disabled);
+  color: var(--n-text-color-disabled) !important;
+  opacity: 0.6;
+}
+
+.code-editor-container.is-disabled :deep(.n-input .n-input__textarea-el) {
+  color: var(--n-text-color-disabled) !important;
+}
+
+/* Strip internal Naive UI defaults to let container handle borders */
+/* 移除 Naive UI 內部預設樣式，改由最外層 container 統一掌控邊框 */
 :deep(.n-input) {
   border: none !important;
   background-color: transparent !important;
@@ -194,6 +238,7 @@ function handleUpdateValue(value: string) {
 }
 
 /* 1. Left Side: Line Numbers Styling */
+/* 1. 左側：行號區域樣式 */
 .line-numbers {
   background-color: var(--line-number-bg);
   color: var(--line-number-color);
@@ -206,9 +251,8 @@ function handleUpdateValue(value: string) {
   width: 45px;
   user-select: none;
   overflow: hidden;
-  /* Hide scrollbar */
+  /* Hide line numbers' native scrollbar / 隱藏行號欄自身的原生捲動條 */
   border-right: 1px solid var(--n-border-color);
-  /* 共用 Naive UI 邊框變數 */
   opacity: 0.75;
   box-sizing: border-box;
 }
@@ -219,8 +263,8 @@ function handleUpdateValue(value: string) {
 }
 
 /* 2. Right Side: Force Naive UI Internal Textarea to Match Exactly */
+/* 2. 右側：強行覆寫 Naive UI 內部文字框，確保像素級對齊 */
 :deep(.n-input .n-input__textarea-el) {
-  /* 這裡不用手動寫死顏色，因為 Naive UI 內部的原生 textarea 已經由物件注入了正確的顏色 */
   font-family: var(--editor-font-family) !important;
   font-size: var(--editor-font-size) !important;
   line-height: var(--editor-line-height) !important;
@@ -230,7 +274,8 @@ function handleUpdateValue(value: string) {
   padding-right: 10px !important;
 }
 
-/* 現代自訂滾動條：滑塊顏色同樣讀取自 Naive UI 的提示色，亮暗模式皆透明適中 */
+/* Modern minimalist custom scrollbars syncing with current theme color */
+/* 現代化極簡自訂捲動條，顏色隨當前主題自動變更 */
 :deep(.n-input .n-input__textarea-el::-webkit-scrollbar) {
   width: 8px;
   height: 8px;
@@ -251,18 +296,19 @@ function handleUpdateValue(value: string) {
   opacity: 0.5;
 }
 
-/* Mirror padding for wrapper if Naive UI introduces extra offsets */
+/* Remove default padding offsets added by Naive UI wrappers */
+/* 移除 Naive UI wrapper 造成的預設內距偏移 */
 :deep(.n-input-wrapper) {
   padding: 0 !important;
 }
 
-/* 精準對齊 placeholder 的水平與垂直位置 */
+/* Precision alignment for the floating placeholder container */
+/* 精準對齊絕對定位的 placeholder 浮動容器 */
 :deep(.n-input .n-input__placeholder) {
   left: 10px !important;
-  /* 與文字的 padding-left 一致 */
-  top: 0px !important;
-  /* 與文字的 padding-top 一致，自動跟隨變數 */
+  top: var(--editor-padding-top) !important;
+  /* Dynamically inherits the exact text top padding / 動態積累文字的頂部內距 */
   transform: none !important;
-  /* 拔掉 Naive UI 預設的垂直置中位移 */
+  /* Strips Naive's single-line vertical centering / 拔除 Naive UI 針對單行設計的垂直居中位移 */
 }
 </style>

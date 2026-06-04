@@ -26,6 +26,10 @@
         "feature": "特性"
     },
     "ui": {
+        "clearConfirm": "請確認是否要 清空 資料！",
+        "resetConfirm": "請確認是否要 重設 資料！",
+        "saveConfirm": "請確認是否要 儲存 資料！",
+        "saveSuccess": "資料存儲成功",
         "clear": "清空",
         "reset": "重置",
         "save": "保存",
